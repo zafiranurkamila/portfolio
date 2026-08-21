@@ -306,7 +306,7 @@ export default function World() {
     >
       {/* Nama pojok kiri atas */}
       <div className="absolute left-3 top-3 z-40">
-        <div className="w-fit rounded-full border-[3px] border-ink bg-card px-4 py-2 font-display text-base font-bold shadow-pop md:text-lg">{profile.name}</div>
+        <div className="w-fit rounded-full border-[3px] border-ink bg-card px-3 py-1.5 font-display text-sm font-bold shadow-pop md:px-4 md:py-2 md:text-lg">{profile.name}</div>
       </div>
 
       {/* Awan */}
@@ -470,14 +470,14 @@ export default function World() {
       </div>
 
       {hint && (
-        <div className="pointer-events-none absolute left-1/2 top-6 z-40 -translate-x-1/2 whitespace-nowrap rounded-full border-[3px] border-ink bg-card px-4 py-1.5 text-xs font-bold shadow-pop md:text-sm">{t.hint}</div>
+        <div className="pointer-events-none absolute left-1/2 top-6 z-40 hidden -translate-x-1/2 whitespace-nowrap rounded-full border-[3px] border-ink bg-card px-4 py-1.5 text-xs font-bold shadow-pop md:block md:text-sm">{t.hint}</div>
       )}
 
       {/* Kontrol kanan atas */}
       <div className="absolute right-3 top-3 z-40 flex gap-2">
-        <button onClick={() => setLang((l) => (l === 'id' ? 'en' : 'id'))} aria-label="Bahasa" className="grid h-11 w-11 place-items-center rounded-full border-[3px] border-ink bg-card font-display text-sm font-bold shadow-pop active:translate-y-0.5">{lang === 'id' ? 'EN' : 'ID'}</button>
-        <button onClick={toggleSound} aria-label="Musik" className={`grid h-11 w-11 place-items-center rounded-full border-[3px] border-ink text-lg shadow-pop active:translate-y-0.5 ${soundOn ? 'bg-accent2' : 'bg-card'}`}>{soundOn ? '🎵' : '🔇'}</button>
-        <button onClick={doSpeak} aria-label="Suara" className="grid h-11 w-11 place-items-center rounded-full border-[3px] border-ink bg-card text-lg shadow-pop active:translate-y-0.5">🔊</button>
+        <button onClick={() => setLang((l) => (l === 'id' ? 'en' : 'id'))} aria-label="Bahasa" className="grid h-10 w-10 md:h-11 md:w-11 place-items-center rounded-full border-[3px] border-ink bg-card font-display text-sm font-bold shadow-pop active:translate-y-0.5">{lang === 'id' ? 'EN' : 'ID'}</button>
+        <button onClick={toggleSound} aria-label="Musik" className={`grid h-10 w-10 md:h-11 md:w-11 place-items-center rounded-full border-[3px] border-ink text-lg shadow-pop active:translate-y-0.5 ${soundOn ? 'bg-accent2' : 'bg-card'}`}>{soundOn ? '🎵' : '🔇'}</button>
+        <button onClick={doSpeak} aria-label="Suara" className="grid h-10 w-10 md:h-11 md:w-11 place-items-center rounded-full border-[3px] border-ink bg-card text-lg shadow-pop active:translate-y-0.5">🔊</button>
       </div>
 
       {/* Tombol jalan */}
