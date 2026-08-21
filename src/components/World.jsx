@@ -185,9 +185,9 @@ export default function World() {
   const startedRef = useRef(false)
   const t = UI[lang]
 
-  // Suara "Hai I'm Zafira" HANYA di Home & About; section lain tanpa suara
+  // Suara "Hai I'm Zafira" HANYA di Home (awal); section lain tanpa suara
   const sayHi = () => {
-    if (active > 1) return // section lain: diam
+    if (active !== 0) return // hanya di Home
     if (lang === 'en') playVoiceClip('/audio/hi-en.mp3')
     else speak(t.voice, lang)
   }
@@ -481,9 +481,9 @@ export default function World() {
       </div>
 
       {/* Tombol jalan */}
-      <button onMouseDown={hold(-1)} onMouseUp={release} onMouseLeave={release} onTouchStart={(e) => { e.preventDefault(); hold(-1)() }} onTouchEnd={release} aria-label="kiri"
+      <button onMouseDown={hold(-1)} onMouseUp={release} onMouseLeave={release} onTouchStart={() => hold(-1)()} onTouchEnd={release} aria-label="kiri"
         className="absolute bottom-4 left-3 z-40 grid h-14 w-14 select-none place-items-center rounded-full border-[3px] border-ink bg-card text-2xl shadow-pop active:translate-y-1 md:h-16 md:w-16">◀</button>
-      <button onMouseDown={hold(1)} onMouseUp={release} onMouseLeave={release} onTouchStart={(e) => { e.preventDefault(); hold(1)() }} onTouchEnd={release} aria-label="kanan"
+      <button onMouseDown={hold(1)} onMouseUp={release} onMouseLeave={release} onTouchStart={() => hold(1)()} onTouchEnd={release} aria-label="kanan"
         className="absolute bottom-4 right-3 z-40 grid h-14 w-14 select-none place-items-center rounded-full border-[3px] border-ink bg-card text-2xl shadow-pop active:translate-y-1 md:h-16 md:w-16">▶</button>
 
       {/* Menu tempat */}
