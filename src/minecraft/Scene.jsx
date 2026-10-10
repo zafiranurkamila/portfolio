@@ -452,7 +452,7 @@ function CameraRig({ playerRef, panelOpen, panelShift, controls, light, introAct
     const dt = Math.min(rawDt, 0.05)
     tmp.set(p.position.x, p.position.y + 1.2, p.position.z)
 
-    if (wake && home) {
+    if (wake && home && !introActive) {
       // adegan bangun tidur: kamera di dalam rumah, menatap Zafira
       // pojok belakang kamar → Zafira terlihat berjalan menjauh ke pintu
       const [cx, cz] = home.tf(2, 0.4)
