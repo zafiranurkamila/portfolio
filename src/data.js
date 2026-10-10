@@ -258,7 +258,7 @@ export const UI = {
     start: 'Mulai',
     studio: {
       name: 'Studio Foto',
-      photographer: 'Zahra',
+      photographer: 'Zahra · Fotografer',
       caption: 'Foto bareng Zahra',
       save: 'Simpan foto',
       locale: 'id-ID',
@@ -397,7 +397,7 @@ export const UI = {
     start: 'Start',
     studio: {
       name: 'Photo Studio',
-      photographer: 'Zahra',
+      photographer: 'Zahra · Photographer',
       caption: 'A photo with Zahra',
       save: 'Save photo',
       locale: 'en-US',

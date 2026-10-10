@@ -639,7 +639,7 @@ export function Studio({ s, name, consumed, Person, onPhotographer }) {
             onPointerLeave={() => setHover(false)}
             aria-label={name}
           >
-            💬{hover && <span className="ml-1">{name}</span>}
+            💬 <span className="ml-1">{name}</span>
           </button>
         </Html>
       </group>
