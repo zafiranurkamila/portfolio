@@ -292,9 +292,9 @@ export function generateWorld() {
       else if (blocks.get(key(x, h, z)) === 'water' && !blocks.has(key(x, h + 1, z))) swim[idx(x, z)] = 1
     }
   }
-  if (warung) for (const lx of [-1, 0, 1]) {
-    const [x, z] = warung.tf(lx, -1)
-    walk[idx(x, z)] = 0 // meja warung
+  if (warung) for (const lx of [-1, 0, 1]) for (const lz of [-1, 1]) {
+    const [x, z] = warung.tf(lx, lz)
+    walk[idx(x, z)] = 0 // meja & gerobak warung
   }
 
   // ——— buang blok yang tertutup penuh (hemat GPU) ———
@@ -709,23 +709,9 @@ function zafiraHouse(place, h) {
 }
 
 // =====================================================================
-//  Warung mie ayam — tenda terpal biru, gerobak berkaca, kompor
+//  Warung mie ayam — cukup area datar; gerobak & meja dibuat di Life.jsx
 // =====================================================================
-function warungStall(place, h) {
-  floor(place, h - 1, 'cobble')
-  for (const x of [-h, h]) for (const z of [-h, h]) for (let y = 1; y <= 3; y++) place(x, y, z, 'log')
-  for (let x = -h - 1; x <= h + 1; x++) for (let z = -h - 1; z <= h + 1; z++) place(x, 4, z, 'wool_blue')
-  for (let x = -h + 1; x <= h - 1; x++) for (let z = -1; z <= 1; z++) place(x, 5, z, 'wool_white')
-  // gerobak mie: badan kayu + etalase kaca
-  for (let x = -1; x <= 1; x++) {
-    place(x, 1, 1, 'planks')
-    place(x, 2, 1, 'glass')
-  }
-  place(0, 3, 1, 'wool_red') // papan nama gerobak
-  // kompor & panci di belakang
-  place(-2, 1, 2, 'furnace')
-  place(2, 1, 2, 'crafting')
-  place(2, 3, -h, 'glow')
-  place(-2, 3, -h, 'glow')
-  return 6
+function warungStall() {
+  // gerobak, meja, dan bangku dibuat sebagai model 3D di Life.jsx (tanpa atap)
+  return 3
 }

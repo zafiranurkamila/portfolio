@@ -36,6 +36,20 @@ function followGround(group, world, dt) {
   group.position.y += (want - group.position.y) * Math.min(1, dt * 14)
 }
 
+// Bar "Makan..." di atas kepala; progres diisi lewat ref (tanpa re-render tiap frame)
+function EatBar({ fill, label, y = 2.45 }) {
+  return (
+    <Html position={[0, y, 0]} zIndexRange={[19, 9]} style={{ pointerEvents: 'none' }}>
+      <div className="mc-eatbar">
+        <div className="mc-eatbar-label">{label}</div>
+        <div className="mc-eatbar-track">
+          <div ref={fill} className="mc-eatbar-fill" />
+        </div>
+      </div>
+    </Html>
+  )
+}
+
 // kursi warung yang sedang dipakai (indeks kursi → id warga / 'zafira'), dibaca juga oleh mangkuk di meja
 export const WARUNG_SEATS = [null, null, null]
 
@@ -55,6 +69,8 @@ const KEYS = {
 
 // Zafira = karakter yang kamu kendalikan
 export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor, onManualMove, onClick, wake, onWakeDone, wakeText, exploreText, onDialog, eatTexts, onAte }) {
+  const [eatingUI, setEatingUI] = useState(false)
+  const eatFill = useRef()
   const group = playerRef
   const moving = useRef(false)
   const queue = useRef([])
@@ -78,6 +94,7 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
     if (WARUNG_SEATS[M.seat] === 'zafira') WARUNG_SEATS[M.seat] = null
     const wasSitting = M.time > 0 && !M.pending
     meal.current = { seat: -1, time: 0, pending: false }
+    setEatingUI(false)
     pose.current.legs = null
     if (wasSitting && g) g.position.y = world.ground(g.position.x, g.position.z) + 0.5
   }
@@ -266,7 +283,10 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
         pose.current.legs = -Math.PI / 2
         moving.current = false
         M.time -= dt
+        if (!eatingUI) setEatingUI(true)
+        if (eatFill.current) eatFill.current.style.width = `${Math.min(100, (1 - M.time / 7) * 100)}%`
         if (M.time <= 0) {
+          setEatingUI(false)
           standUpFromMeal(g)
           setSay(eatTexts.done)
           setTimeout(() => setSay(null), 3000)
@@ -388,6 +408,7 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
           }}
         />
       </group>
+      {eatingUI && !say && <EatBar fill={eatFill} label={eatTexts.eating} />}
       {say && (
         <Html position={[0, 2.35, 0]} zIndexRange={[20, 10]} style={{ pointerEvents: 'none' }}>
           <div className="mc-speech">
@@ -411,7 +432,9 @@ const VILLAGERS = [
   { skin: '#a8724f', hair: '#1b1410', shirt: '#e9ecec', pants: '#3c4fa0', longHair: true },
 ]
 
-function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, onTalk, onApproach, eatLine }) {
+function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, onTalk, onApproach, eatLine, eatingLabel }) {
+  const [eatingUI, setEatingUI] = useState(false)
+  const eatFill = useRef()
   const group = useRef()
   const moving = useRef(false)
   const queue = useRef([])
@@ -482,6 +505,8 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
     // ——— makan di warung: duduk di bangku menghadap meja ———
     if (meal.current.eating > 0) {
       meal.current.eating -= dt
+      if (!eatingUI) setEatingUI(true)
+      if (eatFill.current) eatFill.current.style.width = `${Math.min(100, (1 - meal.current.eating / meal.current.total) * 100)}%`
       const [sx, sz] = W.seats[meal.current.seat]
       g.position.set(sx, world.ground(sx, sz) + 0.5 - 0.22, sz)
       g.rotation.y = W.rot
@@ -489,6 +514,7 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
       moving.current = false
       if (meal.current.eating <= 0) {
         // selesai makan → berdiri lagi
+        setEatingUI(false)
         WARUNG_SEATS[meal.current.seat] = null
         meal.current.seat = -1
         pose.current.legs = null
@@ -525,7 +551,10 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
     } else if (queue.current.length) {
       moving.current = stepAlong(g, queue.current, 1.8, dt)
       // sampai di kursi warung → duduk makan
-      if (!queue.current.length && meal.current.seat >= 0) meal.current.eating = 9 + r() * 6
+      if (!queue.current.length && meal.current.seat >= 0) {
+        meal.current.eating = 9 + r() * 6
+        meal.current.total = meal.current.eating
+      }
     } else {
       moving.current = false
       wait.current -= dt
@@ -575,13 +604,14 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
         <boxGeometry args={[1.8, 2.8, 1.8]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
+      {eatingUI && !say && <EatBar fill={eatFill} label={eatingLabel} y={2.7} />}
       <Html position={[0, 2.35, 0]} zIndexRange={[18, 8]}>
         {say ? (
           <div className="mc-speech pointer-events-none">
             <div className="mc-speech-name">{name}</div>
             {say}
           </div>
-        ) : (
+        ) : eatingUI ? null : (
           // tombol 💬 selalu tampil di atas kepala → gampang diketuk
           <button
             className={`mc-talkbtn ${hover ? 'is-hot' : ''}`}
@@ -598,7 +628,7 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
   )
 }
 
-export function Villagers({ world, playerRef, consumed, villagers, sound, onTalk, onApproach, eatLine }) {
+export function Villagers({ world, playerRef, consumed, villagers, sound, onTalk, onApproach, eatLine, eatingLabel }) {
   return VILLAGERS.map((look, i) => (
     <Villager
       key={i}
@@ -613,6 +643,7 @@ export function Villagers({ world, playerRef, consumed, villagers, sound, onTalk
       onTalk={onTalk}
       onApproach={onApproach}
       eatLine={eatLine}
+      eatingLabel={eatingLabel}
     />
   ))
 }

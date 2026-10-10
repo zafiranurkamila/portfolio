@@ -337,6 +337,75 @@ function Bowl({ seatIdx, pos, rot }) {
   )
 }
 
+// ——— gerobak mie ayam (kayu, roda, etalase kaca, panci berasap) ———
+function Gerobak({ w, text, DoorSign }) {
+  const [cx, cz] = w.tf(0, 1)
+  const steam = useRef([])
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime
+    steam.current.forEach((s, i) => {
+      if (!s) return
+      const k = (t * 0.5 + i / 4) % 1
+      s.position.y = 2.25 + k * 0.9
+      s.position.x = 0.6 + Math.sin(t * 1.5 + i) * 0.08
+      s.material.opacity = (1 - k) * 0.45
+    })
+  })
+  const wheel = useMemo(() => {
+    const g = new THREE.CylinderGeometry(0.36, 0.36, 0.12, 12)
+    g.rotateZ(Math.PI / 2)
+    return g
+  }, [])
+  const glass = useMemo(
+    () => new THREE.MeshLambertMaterial({ color: '#cfe8f5', transparent: true, opacity: 0.35, depthWrite: false }),
+    [],
+  )
+  return (
+    <group position={[cx, 0.5, cz]} rotation-y={w.rot}>
+      {/* roda */}
+      {[-0.98, 0.98].map((x) => (
+        <group key={x}>
+          <mesh geometry={wheel} material={mat('#2b2b2b')} position={[x, 0.36, 0.1]} castShadow />
+          <Part p={[x, 0.36, 0.1]} s={[0.14, 0.14, 0.14]} c="#8a8a8a" />
+        </group>
+      ))}
+      {/* badan gerobak */}
+      <Part p={[0, 0.9, 0]} s={[1.8, 0.7, 0.95]} c="#c0392b" />
+      <Part p={[0, 1.27, 0]} s={[1.9, 0.06, 1.05]} c="#a8834f" />
+      <Part p={[0, 0.58, -0.49]} s={[1.8, 0.06, 0.02]} c="#f2f2f2" />
+      {/* etalase kaca + isinya */}
+      <mesh position={[0, 1.6, 0]} material={glass}>
+        <boxGeometry args={[1.7, 0.6, 0.85]} />
+      </mesh>
+      {[[-0.86, -0.43], [0.86, -0.43], [-0.86, 0.43], [0.86, 0.43]].map(([x, z], i) => (
+        <Part key={i} p={[x, 1.6, z]} s={[0.05, 0.6, 0.05]} c="#6b4423" />
+      ))}
+      <Part p={[0, 1.93, 0]} s={[1.9, 0.06, 1.0]} c="#a8834f" />
+      <Part p={[-0.45, 1.38, 0]} s={[0.5, 0.16, 0.4]} c="#f0c95a" />
+      <Part p={[0.05, 1.36, 0.05]} s={[0.3, 0.12, 0.3]} c="#8a5a30" />
+      {[0, 1, 2].map((i) => (
+        <Part key={i} p={[0.55, 1.34 + i * 0.09, 0]} s={[0.32, 0.07, 0.32]} c="#f4f4f0" />
+      ))}
+      {/* panci di atas */}
+      <Part p={[0.6, 2.1, 0.1]} s={[0.5, 0.32, 0.5]} c="#9a9a9a" />
+      <Part p={[0.6, 2.28, 0.1]} s={[0.54, 0.04, 0.54]} c="#7a7a7a" />
+      {[0, 1, 2, 3].map((i) => (
+        <mesh key={i} ref={(el) => (steam.current[i] = el)} position={[0.6, 2.3, 0.1]}>
+          <boxGeometry args={[0.1, 0.1, 0.1]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.4} depthWrite={false} />
+        </mesh>
+      ))}
+      {/* pegangan dorong (ke arah penjual) & kaki depan */}
+      {[-0.7, 0.7].map((x) => (
+        <Part key={x} p={[x, 1.05, 0.85]} s={[0.07, 0.07, 0.8]} c="#6b4423" />
+      ))}
+      <Part p={[0, 0.3, -0.35]} s={[0.12, 0.6, 0.12]} c="#6b4423" />
+      {/* tulisan MIE AYAM di depan gerobak */}
+      <DoorSign pos={[0, 0.92, -0.5]} rot={Math.PI} text={text} width={1.6} />
+    </group>
+  )
+}
+
 export function Warung({ w, t, consumed, Person, DoorSign, onOrder }) {
   const [say, setSay] = useState(null)
   const idx = useRef(0)
@@ -408,11 +477,7 @@ export function Warung({ w, t, consumed, Person, DoorSign, onOrder }) {
           )}
         </Html>
       </group>
-      {(() => {
-        // papan nama tergantung di bawah tepi depan atap
-        const [fx, fz] = w.tf(0, -3.6)
-        return <DoorSign pos={[fx, 3.1, fz]} rot={w.rot + Math.PI} text={t.warung.name} width={5} />
-      })()}
+      <Gerobak w={w} text={t.warung.cartText} DoorSign={DoorSign} />
     </>
   )
 }

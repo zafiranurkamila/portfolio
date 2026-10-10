@@ -80,14 +80,45 @@ export function DoorSign({ pos, rot, text, width = 4.2 }) {
   )
 }
 
-// posisi papan: di dinding depan, tepat di atas pintu
-function signFor(door, outside, y) {
+// ——— papan nama besar di atas atap (dua sisi, ditopang 2 tiang kayu) ———
+// tinggi papan & panjang tiang dihitung dari bentuk atap supaya tiang selalu menempel
+function RoofSign({ world, x: cx, z: cz, half, door, outside, text, width = 6.5 }) {
   const fx = outside[0] - door[0]
   const fz = outside[1] - door[1]
-  const l = Math.hypot(fx, fz) || 1
-  return { pos: [door[0] + (fx / l) * 0.56, y, door[1] + (fz / l) * 0.56], rot: Math.atan2(fx, fz) }
+  const rot = Math.atan2(fx, fz)
+  const h = width / 4
+  // papan ditaruh di bagian depan atap (bukan di tengah) supaya tidak menabrak cerobong/bendera
+  const fl = Math.hypot(fx, fz) || 1
+  const x = cx + (fx / fl) * (half - 0.5)
+  const z = cz + (fz / fl) * (half - 0.5)
+  const { bottom, posts } = useMemo(() => {
+    const topAt = (wx, wz) => {
+      for (let y = 24; y >= -1; y--) if (world.blockAt(Math.round(wx), y, Math.round(wz))) return y + 0.5
+      return 0.5
+    }
+    // titik di sepanjang papan (sumbu x lokal papan → dunia)
+    const at = (lx) => [x + Math.cos(rot) * lx, z - Math.sin(rot) * lx]
+    let max = 0
+    for (let lx = -width / 2; lx <= width / 2; lx += 0.5) max = Math.max(max, topAt(...at(lx)))
+    const b = max + 0.5
+    const px = width / 2 - 0.5
+    return { bottom: b, posts: [-px, px].map((lx) => ({ lx, top: topAt(...at(lx)) })) }
+  }, [world, x, z, rot, width])
+  const y = bottom + h / 2
+  return (
+    <group position={[x, 0, z]} rotation-y={rot}>
+      {posts.map((p) => (
+        <mesh key={p.lx} position={[p.lx, (p.top + bottom) / 2, 0]} castShadow>
+          <boxGeometry args={[0.18, bottom - p.top + 0.1, 0.18]} />
+          <meshLambertMaterial color="#5a3a20" />
+        </mesh>
+      ))}
+      {/* depan & belakang sama-sama ada tulisan */}
+      <DoorSign pos={[0, y, 0.05]} rot={0} text={text} width={width} />
+      <DoorSign pos={[0, y, -0.05]} rot={Math.PI} text={text} width={width} />
+    </group>
+  )
 }
-const SIGN_Y = { work: 4.25, journey: 3.9 }
 
 // ——— Bangunan yang bisa diklik: kotak tak terlihat + garis seleksi + papan nama ———
 function Station({ s, label, hovered, onHover, onSelect, consumed }) {
@@ -322,7 +353,7 @@ function StageBoard({ repo, lang, t }) {
 }
 
 // ——— Rumah Zafira: kasur + papan nama ———
-function ZafiraHome({ home, label }) {
+function ZafiraHome({ world, home, label }) {
   const [bx, bz] = home.tf(-2, 1.5)
   return (
     <>
@@ -347,7 +378,7 @@ function ZafiraHome({ home, label }) {
           <meshLambertMaterial color="#ffffff" />
         </mesh>
       </group>
-      <DoorSign {...signFor(home.door, home.outside, 3)} text={label} />
+      <RoofSign world={world} x={home.x} z={home.z} half={3} door={home.door} outside={home.outside} text={label} />
     </>
   )
 }
@@ -772,7 +803,7 @@ export default function Scene({
       <Animals world={world} lang={lang} consumed={consumed} />
       <Boats Person={Person} />
       <WindStreaks center={playerRef} />
-      <Villagers world={world} playerRef={playerRef} consumed={consumed} villagers={t.villagers} sound={sound} onTalk={onTalk} onApproach={onApproach} eatLine={t.warung.eatLine} />
+      <Villagers world={world} playerRef={playerRef} consumed={consumed} villagers={t.villagers} sound={sound} onTalk={onTalk} onApproach={onApproach} eatLine={t.warung.eatLine} eatingLabel={t.warung.eating} />
       <Player
         world={world}
         command={command}
@@ -795,14 +826,23 @@ export default function Scene({
       />
       <TargetMarker marker={marker} world={world} />
       <StageBoard repo={repo} lang={lang} t={t} />
-      {world.home && <ZafiraHome home={world.home} label={t.homeLabel} />}
+      {world.home && <ZafiraHome world={world} home={world.home} label={t.homeLabel} />}
       {world.stations.filter((s) => s.desk).map((s) => (
         <Desk key={s.id} s={s} lit={focusId === s.id} onPaper={onPaper} consumed={consumed} />
       ))}
       {world.stations
         .filter((s) => s.desk)
         .map((s) => (
-          <DoorSign key={'sign-' + s.id} {...signFor(s.door, s.outside, SIGN_Y[s.id] || 3)} text={labels[s.id]} />
+          <RoofSign
+            key={'sign-' + s.id}
+            world={world}
+            half={s.half}
+            x={s.x}
+            z={s.z}
+            door={s.door}
+            outside={s.outside}
+            text={labels[s.id]}
+          />
         ))}
       {world.stations.slice(1).map((s) => (
         <Station

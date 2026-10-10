@@ -258,9 +258,11 @@ export const UI = {
     start: 'Mulai',
     warung: {
       name: 'Warung Mie Ayam',
+      cartText: 'MIE AYAM',
       seller: 'Pak Mie',
       eatLine: 'Kenyang! Enak banget mie ayamnya.',
       done: 'Mmm... enak banget! Kenyang!',
+      eating: 'Makan...',
       full: 'Yah, bangkunya penuh. Nanti balik lagi deh.',
       lines: [
         'Mie ayam, Kak? Hangat, baru matang!',
@@ -370,9 +372,11 @@ export const UI = {
     start: 'Start',
     warung: {
       name: 'Chicken Noodle Stall',
+      cartText: 'MIE AYAM',
       seller: 'Mr. Noodle',
       eatLine: "I'm full! That chicken noodle was so good.",
       done: "Mmm... so good! I'm full!",
+      eating: 'Eating...',
       full: "Oh, the benches are full. I'll come back later.",
       lines: [
         'Chicken noodles? Warm and freshly made!',

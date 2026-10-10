@@ -607,3 +607,29 @@ main[data-panel='1'] .mc-talkbtn {
     background: rgba(0, 0, 0, 0.35);
   }
 }
+
+/* ——— bar "Makan..." di atas kepala ——— */
+.mc-eatbar {
+  transform: translate(-50%, -100%);
+  width: 92px;
+  padding: 3px 5px 5px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+.mc-eatbar-label {
+  font-size: 13px;
+  line-height: 1.2;
+  color: #fff;
+}
+.mc-eatbar-track {
+  margin-top: 3px;
+  height: 7px;
+  background: #3a3a3a;
+  border: 1px solid #000;
+}
+.mc-eatbar-fill {
+  width: 0;
+  height: 100%;
+  background: #80ff20;
+}
