@@ -229,10 +229,10 @@ export const repoFallback = [
 export const UI = {
   id: {
     role: profile.role,
-    voice: 'Hai, aku Zafira, seorang web dan AI developer!',
     stations: ['Panggung', 'Tentang', 'Pendidikan', 'Teknologi', 'Proyek', 'Perjalanan', 'Kontak'],
     bubbles: ['Hai, aku Zafira!', 'Ini sedikit tentangku!', 'Ini pendidikanku!', 'Ini teknologiku!', 'Lihat proyekku!', 'Perjalananku!', 'Yuk ngobrol!'],
-    hint: 'Klik/tap tanah untuk jalan · WASD/panah · klik bangunan untuk masuk · geser untuk memutar kamera',
+    hint: 'Klik tanah untuk jalan · WASD/panah · klik bangunan untuk masuk · drag kiri memutar, drag kanan menggeser, scroll untuk zoom',
+    hintTouch: 'Ketuk tanah untuk jalan · geser 1 jari untuk melihat-lihat · cubit 2 jari untuk zoom · ketuk bangunan untuk masuk',
     enter: 'Masuk',
     loading: 'Dunianya sudah siap!',
     waitTitle: 'Tunggu sebentar ya',
@@ -324,10 +324,10 @@ export const UI = {
   },
   en: {
     role: profile.roleEn,
-    voice: "Hai, I'm Zafira, a web and AI developer!",
     stations: ['Stage', 'About', 'Education', 'Tech', 'Work', 'Journey', 'Contact'],
     bubbles: ["Hai, I'm Zafira!", 'A little about me!', 'My education!', 'My tech stack!', 'Check my projects!', 'My journey!', "Let's connect!"],
-    hint: 'Click/tap the ground to walk · WASD/arrows · click a building to enter · drag to rotate the camera',
+    hint: 'Click the ground to walk · WASD/arrows · click a building to enter · left-drag rotates, right-drag pans, scroll to zoom',
+    hintTouch: 'Tap the ground to walk · drag with one finger to look around · pinch to zoom · tap a building to enter',
     enter: 'Enter',
     loading: 'Building world',
     loadingSub: 'Placing blocks...',

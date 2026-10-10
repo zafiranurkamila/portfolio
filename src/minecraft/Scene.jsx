@@ -410,6 +410,8 @@ function CameraRig({ playerRef, panelOpen, panelShift, controls, light, introAct
   const returning = useRef(0)
   const focusTarget = useMemo(() => new THREE.Vector3(), [])
   const focusTime = useRef(0)
+  const freeLook = useRef(null) // posisi Zafira saat pengguna mulai menggeser pandangan
+  const preUpdate = useMemo(() => new THREE.Vector3(), [])
   const wasWake = useRef(false)
 
   // adegan selesai → kamera meluncur keluar rumah ke posisi biasa
@@ -509,6 +511,21 @@ function CameraRig({ playerRef, panelOpen, panelShift, controls, light, introAct
         c.minDistance = 10
       }
     } else {
+      // sedang melihat-lihat → kembali mengikuti begitu Zafira jalan lagi
+      if (freeLook.current && p.position.distanceTo(freeLook.current) > 0.4) freeLook.current = null
+      // batasi area geser supaya tidak keluar dunia
+      const r = Math.hypot(c.target.x, c.target.z)
+      if (r > 58) {
+        const s = 58 / r
+        const ox = c.target.x * (s - 1)
+        const oz = c.target.z * (s - 1)
+        c.target.x += ox
+        c.target.z += oz
+        camera.position.x += ox
+        camera.position.z += oz
+      }
+    }
+    if (!introActive && !focus && !wake && returning.current <= 0 && intro.current >= 1 && !freeLook.current) {
       // ikuti Zafira; sudut & zoom tetap bisa diatur pengguna
       const k = 1 - Math.exp(-dt * 5)
       const dx = (tmp.x - c.target.x) * k
@@ -545,7 +562,11 @@ function CameraRig({ playerRef, panelOpen, panelShift, controls, light, introAct
     shift.current.y += (want.y - shift.current.y) * k2
     if (Math.abs(shift.current.x) + Math.abs(shift.current.y) < 0.5) camera.clearViewOffset()
     else camera.setViewOffset(size.width, size.height, shift.current.x, shift.current.y, size.width, size.height)
+    // hanya geseran (pan) pengguna yang menggeser target di dalam update()
+    preUpdate.copy(c.target)
     c.update()
+    const following = !introActive && !focus && !wake && returning.current <= 0 && intro.current >= 1
+    if (following && c.target.distanceTo(preUpdate) > 0.002 && !freeLook.current) freeLook.current = p.position.clone()
   })
   return null
 }
@@ -697,7 +718,10 @@ export default function Scene({
       <OrbitControls
         ref={controls}
         makeDefault
-        enablePan={false}
+        enablePan
+        screenSpacePanning={false}
+        panSpeed={1.2}
+        touches={{ ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE }}
         enableDamping
         minDistance={10}
         maxDistance={90}

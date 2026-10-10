@@ -589,3 +589,16 @@
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+
+/* label 3D disembunyikan saat panel/kertas terbuka supaya tidak menimpa tulisan */
+main[data-panel='1'] .mc-nametag,
+main[data-panel='1'] .mc-talkbtn {
+  display: none;
+}
+@media (max-width: 767px) {
+  .mc-logo {
+    display: inline-block;
+    padding: 4px 6px 2px;
+    background: rgba(0, 0, 0, 0.35);
+  }
+}

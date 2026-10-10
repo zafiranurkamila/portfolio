@@ -9,7 +9,7 @@ import { blockIcon, textureURL } from './textures'
 import { fetchRecentRepos } from './github'
 import { UI, profile } from '../data'
 import {
-  startAmbient, stopAmbient, clickSound, advancementSound, playVoiceClip, preloadVoice, speak, unlockAudio, clingSound, typeSound,
+  startAmbient, stopAmbient, clickSound, advancementSound, unlockAudio, clingSound, typeSound,
 } from '../sound'
 
 const ICONS = ['grass', 'planks', 'bookshelf', 'crafting', 'glow', 'log', 'wool_red']
@@ -238,10 +238,6 @@ export default function MinecraftWorld() {
     return () => window.removeEventListener('resize', on)
   }, [])
 
-  useEffect(() => {
-    preloadVoice('/audio/hi-en.mp3')
-  }, [])
-
   // bunyi "cling" untuk semua tombol bergaya batu
   useEffect(() => {
     const on = (e) => {
@@ -402,12 +398,11 @@ export default function MinecraftWorld() {
 
   const avatarClick = useCallback(() => {
     setBubble({ text: t.bubbles[0], n: Math.random() })
-    if (!sound) return
-    if (lang === 'en') playVoiceClip('/audio/hi-en.mp3')
-    else speak(t.voice, 'id')
-  }, [t, sound, lang])
+    if (sound) clickSound()
+  }, [t, sound])
 
   const panelOpen = active !== 'home'
+  const isTouch = useMemo(() => window.matchMedia?.('(pointer: coarse)').matches, [])
   const playing = phase === 'play'
 
   const start = (chosen, withMusic) => {
@@ -419,7 +414,7 @@ export default function MinecraftWorld() {
   }
 
   return (
-    <main className="mc-sky fixed inset-0 select-none overflow-hidden">
+    <main className="mc-sky fixed inset-0 select-none overflow-hidden" data-panel={panelOpen || !!focusId ? '1' : '0'}>
       {/* lapisan langit untuk tiap mode (transisi lewat opacity) */}
       {['pagi', 'sore', 'malam'].map((m) => (
         <div key={m} className={`mc-sky-layer mc-sky-${m} ${timeMode === m ? 'opacity-100' : 'opacity-0'}`} />
@@ -474,7 +469,7 @@ export default function MinecraftWorld() {
       </header>
 
       {/* tombol kanan atas */}
-      <div className="fixed right-3 top-3 z-40 flex gap-2 md:right-5 md:top-4">
+      <div className="fixed right-3 top-11 z-40 flex gap-2 md:right-5 md:top-4">
         <button className="mc-btn" onClick={() => setLang(lang === 'id' ? 'en' : 'id')} aria-label="Language">
           {lang === 'id' ? 'ID' : 'EN'} ⇄
         </button>
@@ -504,7 +499,7 @@ export default function MinecraftWorld() {
 
       {playing && !panelOpen && !nearDoor && !focusId && !dialog && (
         <div className="pointer-events-none fixed inset-x-0 bottom-[112px] z-10 px-4 text-center text-[15px] text-white [text-shadow:2px_2px_0_#3f3f3f]">
-          {t.hint}
+          {isTouch ? t.hintTouch : t.hint}
         </div>
       )}
 
