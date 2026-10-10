@@ -337,7 +337,7 @@ function Bowl({ seatIdx, pos, rot }) {
   )
 }
 
-export function Warung({ w, t, consumed, Person, DoorSign }) {
+export function Warung({ w, t, consumed, Person, DoorSign, onOrder }) {
   const [say, setSay] = useState(null)
   const idx = useRef(0)
   const { gl } = useThree()
@@ -357,6 +357,7 @@ export function Warung({ w, t, consumed, Person, DoorSign }) {
     idx.current += 1
     typeSound()
     setTimeout(() => setSay(null), 4000)
+    onOrder() // Zafira ikut pesan & makan
   }
 
   return (
@@ -410,7 +411,7 @@ export function Warung({ w, t, consumed, Person, DoorSign }) {
       {(() => {
         // papan nama tergantung di bawah tepi depan atap
         const [fx, fz] = w.tf(0, -3.6)
-        return <DoorSign pos={[fx, 3.3, fz]} rot={w.rot + Math.PI} text={t.warung.name} width={3.4} />
+        return <DoorSign pos={[fx, 3.1, fz]} rot={w.rot + Math.PI} text={t.warung.name} width={5} />
       })()}
     </>
   )

@@ -6,12 +6,12 @@ import { blockIcon } from './textures'
 //  Tahap 1: jelajahi desa → Tahap 2: main game di tiap pojok dunia
 // =====================================================================
 
-export const EXPLORE_QUESTS = ['now', 'about', 'education', 'tech', 'work', 'journey', 'contact', 'talk']
+export const EXPLORE_QUESTS = ['now', 'about', 'education', 'tech', 'work', 'journey', 'contact', 'talk', 'eat']
 export const GAME_QUESTS = ['game_mine', 'game_memory', 'game_slime']
 
 const ICON = {
   now: 'stonebrick', about: 'planks', education: 'bookshelf', tech: 'crafting', work: 'glow',
-  journey: 'log', contact: 'wool_blue', talk: 'wool_white',
+  journey: 'log', contact: 'wool_blue', talk: 'wool_white', eat: 'wool_red',
   game_mine: 'ore_diamond', game_memory: 'crafting', game_slime: 'slime',
 }
 
@@ -100,7 +100,7 @@ export function QuestLog({ done, t, labels, onGo, compact }) {
                     key={id}
                     id={id}
                     done={done.has(id)}
-                    label={id === 'talk' ? t.q.talk : `${t.q.visit} ${labels[id]}`}
+                    label={id === 'talk' ? t.q.talk : id === 'eat' ? t.q.eat : `${t.q.visit} ${labels[id]}`}
                     onGo={onGo}
                   />
                 ))}

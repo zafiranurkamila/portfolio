@@ -297,7 +297,7 @@ export default function MinecraftWorld() {
       questsRef.current = next
       setQuests(next)
       saveQuests(next)
-      const label = id === 'talk' ? t.q.talk : labelMap[id]
+      const label = id === 'talk' ? t.q.talk : id === 'eat' ? t.q.eat : labelMap[id]
       pushToast({ icon: id.startsWith('game_') ? 'ore_diamond' : 'glow', title: t.q.done, text: label })
       if (sound) advancementSound()
       const exploreDone = EXPLORE_QUESTS.every((q) => next.has(q))
@@ -340,6 +340,14 @@ export default function MinecraftWorld() {
     },
     [sound, completeQuest],
   )
+
+  // pesan mie ayam → Zafira jalan ke warung, duduk, dan makan
+  const orderNoodles = useCallback(() => {
+    clearTimeout(panelTimer.current)
+    setFocusId(null)
+    setActive('home')
+    setCommand({ type: 'eat', n: Math.random() })
+  }, [])
 
   const closePanel = useCallback(() => {
     clearTimeout(panelTimer.current)
@@ -450,6 +458,8 @@ export default function MinecraftWorld() {
             wake={phase === 'wake' ? 'waking' : playing ? null : 'asleep'}
             onWakeDone={() => setPhase('play')}
             onDialog={(text) => setDialog({ text, n: Math.random() })}
+            onOrder={orderNoodles}
+            onAte={() => completeQuest('eat')}
             focusId={focusId}
             onPaper={() => openPaper(focusId)}
             repo={repos?.[0]}
@@ -521,7 +531,7 @@ export default function MinecraftWorld() {
           t={t}
           labels={labelMap}
           compact={panelOpen || !!focusId}
-          onGo={(id) => select(id === 'now' ? 'home' : id)}
+          onGo={(id) => (id === 'eat' ? orderNoodles() : select(id === 'now' ? 'home' : id))}
         />
       )}
       {showComplete && <QuestComplete t={t} onClose={() => setShowComplete(false)} />}

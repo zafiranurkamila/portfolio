@@ -36,6 +36,9 @@ function followGround(group, world, dt) {
   group.position.y += (want - group.position.y) * Math.min(1, dt * 14)
 }
 
+// kursi warung yang sedang dipakai (indeks kursi → id warga / 'zafira'), dibaca juga oleh mangkuk di meja
+export const WARUNG_SEATS = [null, null, null]
+
 const ZAFIRA = {
   skin: '#e7b48f',
   hair: '#2e1f17',
@@ -51,7 +54,7 @@ const KEYS = {
 }
 
 // Zafira = karakter yang kamu kendalikan
-export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor, onManualMove, onClick, wake, onWakeDone, wakeText, exploreText, onDialog }) {
+export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor, onManualMove, onClick, wake, onWakeDone, wakeText, exploreText, onDialog, eatTexts, onAte }) {
   const group = playerRef
   const moving = useRef(false)
   const queue = useRef([])
@@ -66,6 +69,18 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
   const fwd = useMemo(() => new THREE.Vector3(), [])
   const bodyRef = useRef()
   const pose = useRef({ legs: null })
+  const meal = useRef({ seat: -1, time: 0, pending: false })
+  const swimT = useRef(0)
+  const ripple = useRef()
+  const standUpFromMeal = (g) => {
+    const M = meal.current
+    if (M.seat < 0) return
+    if (WARUNG_SEATS[M.seat] === 'zafira') WARUNG_SEATS[M.seat] = null
+    const wasSitting = M.time > 0 && !M.pending
+    meal.current = { seat: -1, time: 0, pending: false }
+    pose.current.legs = null
+    if (wasSitting && g) g.position.y = world.ground(g.position.x, g.position.z) + 0.5
+  }
   const wakeT = useRef(0)
   const wakeQueue = useRef(null)
   const wakeDone = useRef(false)
@@ -170,13 +185,32 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
   useEffect(() => {
     if (!command) return
     const g = group.current
+    // perintah baru → berhenti makan dulu (kalau sedang di warung)
+    standUpFromMeal(g)
     const from = [g.position.x, g.position.z]
     const go = (to, extra = []) => {
-      const path = world.findPath(from, to)
+      const path = world.findPath(from, to, { swim: true })
       if (!path) {
         g.position.set(to[0], world.ground(to[0], to[1]) + 0.5, to[1])
         queue.current = [...extra]
       } else queue.current = [...path, ...extra]
+    }
+    if (command.type === 'eat') {
+      // pesan mie ayam → jalan ke bangku kosong, lalu duduk makan
+      const W = world.warung
+      const free = WARUNG_SEATS.findIndex((x) => x === null)
+      if (!W || free < 0) {
+        setSay(eatTexts.full)
+        setTimeout(() => setSay(null), 2500)
+        return
+      }
+      WARUNG_SEATS[free] = 'zafira'
+      meal.current = { seat: free, time: 0, pending: true }
+      insideId.current = null
+      pendingEnter.current = null
+      speed.current = 6
+      go(W.seats[free], [W.seats[free]])
+      return
     }
     if (command.type === 'enter') {
       const s = station(command.id)
@@ -198,7 +232,7 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
       insideId.current = null
       pendingEnter.current = null
       speed.current = command.run ? 7.5 : 5.5
-      const path = world.findPath(from, command.to)
+      const path = world.findPath(from, command.to, { swim: true })
       if (path) queue.current = path
       g.userData.faceAfter = command.face || null
     }
@@ -218,6 +252,28 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
     if (wake && world.home) {
       runWake(g, dt)
       return
+    }
+
+    // ——— makan mie ayam di warung ———
+    const M = meal.current
+    if (M.seat >= 0 && !M.pending && M.time > 0) {
+      if (pressed.current.size) standUpFromMeal(g)
+      else {
+        const W = world.warung
+        const [sx, sz] = W.seats[M.seat]
+        g.position.set(sx, world.ground(sx, sz) + 0.5 - 0.33, sz)
+        g.rotation.y = W.rot
+        pose.current.legs = -Math.PI / 2
+        moving.current = false
+        M.time -= dt
+        if (M.time <= 0) {
+          standUpFromMeal(g)
+          setSay(eatTexts.done)
+          setTimeout(() => setSay(null), 3000)
+          onAte()
+        }
+        return
+      }
     }
 
     // kontrol keyboard (relatif terhadap arah kamera)
@@ -249,7 +305,9 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
       const h0 = world.ground(p.x, p.z)
       const free = (x, z) =>
         [[0, 0], [0.28, 0], [-0.28, 0], [0, 0.28], [0, -0.28]].every(
-          ([ox, oz]) => world.canWalk(x + ox, z + oz) && Math.abs(world.ground(x + ox, z + oz) - h0) <= 1,
+          ([ox, oz]) =>
+            (world.canWalk(x + ox, z + oz) || world.isWater(x + ox, z + oz)) &&
+            Math.abs(world.ground(x + ox, z + oz) - h0) <= 1,
         )
       if (free(p.x + mx * step, p.z + mz * step)) {
         p.x += mx * step
@@ -261,6 +319,10 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
       g.userData.face = undefined
     } else {
       moving.current = stepAlong(g, queue.current, speed.current, dt)
+      if (!moving.current && meal.current.pending) {
+        meal.current.pending = false
+        meal.current.time = 7
+      }
       if (!moving.current && pendingEnter.current) {
         const id = pendingEnter.current
         pendingEnter.current = null
@@ -277,7 +339,21 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
       if (moving.current) g.userData.face = undefined
       else if (g.userData.face !== undefined) turnTo(g, g.userData.face, dt * 6)
     }
-    followGround(g, world, dt)
+    // berenang: badan tenggelam sampai bahu, terapung naik-turun, tangan mengayuh
+    const inWater = world.isWater(g.position.x, g.position.z)
+    pose.current.swim = inWater
+    swimT.current += dt
+    if (inWater) {
+      const want = -1.0 + Math.sin(swimT.current * 2.5) * 0.06
+      g.position.y += (want - g.position.y) * Math.min(1, dt * 6)
+    } else followGround(g, world, dt)
+    if (ripple.current) {
+      ripple.current.visible = inWater
+      ripple.current.position.set(g.position.x, 0.33, g.position.z)
+      const k = (swimT.current * 0.8) % 1
+      ripple.current.scale.setScalar(0.8 + k * 1.2)
+      ripple.current.material.opacity = (1 - k) * 0.6
+    }
 
     // dekat pintu? munculkan tombol "Masuk"
     nearTimer.current -= dt
@@ -295,6 +371,11 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
   })
 
   return (
+    <>
+    <mesh ref={ripple} rotation-x={-Math.PI / 2} visible={false}>
+      <ringGeometry args={[0.55, 0.75, 20]} />
+      <meshBasicMaterial color="#ffffff" transparent opacity={0.5} depthWrite={false} />
+    </mesh>
     <group ref={group} position={[0, 0.5, 2]}>
       <group ref={bodyRef}>
         <Person
@@ -316,6 +397,7 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
         </Html>
       )}
     </group>
+    </>
   )
 }
 
@@ -328,9 +410,6 @@ const VILLAGERS = [
   { skin: '#f0c7a1', hair: '#2e1f17', shirt: '#c8961e', pants: '#3b3b3b' },
   { skin: '#a8724f', hair: '#1b1410', shirt: '#e9ecec', pants: '#3c4fa0', longHair: true },
 ]
-
-// kursi warung yang sedang dipakai (indeks kursi → id warga), dibaca juga oleh mangkuk di meja
-export const WARUNG_SEATS = [null, null, null]
 
 function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, onTalk, onApproach, eatLine }) {
   const group = useRef()

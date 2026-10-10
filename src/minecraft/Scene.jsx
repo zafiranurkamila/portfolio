@@ -37,7 +37,7 @@ function drawSign(canvas, text) {
   g.fillText(text, W / 2, H / 2 + 2)
 }
 
-export function DoorSign({ pos, rot, text, width = 3 }) {
+export function DoorSign({ pos, rot, text, width = 4.2 }) {
   const canvas = useMemo(() => {
     const c = document.createElement('canvas')
     c.width = 384
@@ -87,7 +87,7 @@ function signFor(door, outside, y) {
   const l = Math.hypot(fx, fz) || 1
   return { pos: [door[0] + (fx / l) * 0.56, y, door[1] + (fz / l) * 0.56], rot: Math.atan2(fx, fz) }
 }
-const SIGN_Y = { work: 4.05, journey: 4.1 }
+const SIGN_Y = { work: 4.25, journey: 3.9 }
 
 // ——— Bangunan yang bisa diklik: kotak tak terlihat + garis seleksi + papan nama ———
 function Station({ s, label, hovered, onHover, onSelect, consumed }) {
@@ -724,7 +724,7 @@ function TargetMarker({ marker, world }) {
 export default function Scene({
   labels, hovered, setHovered, onSelect, command, bubble, onEnter, onNearDoor, onManualMove,
   onGroundClick, onAvatarClick, panelOpen, panelShift, marker, introActive, focusId, onPaper,
-  repo, lang, t, sound, onTalk, onApproach, timeMode = 'pagi', wake, onWakeDone, onDialog,
+  repo, lang, t, sound, onTalk, onApproach, timeMode = 'pagi', wake, onWakeDone, onDialog, onOrder, onAte,
 }) {
   const world = useMemo(() => generateWorld(), [])
   const controls = useRef()
@@ -768,7 +768,7 @@ export default function Scene({
       <Blocks byType={world.byType} blockAt={world.blockAt} />
       <Plants plants={world.plants} />
       <WindClock />
-      {world.warung && <Warung w={world.warung} t={t} consumed={consumed} Person={Person} DoorSign={DoorSign} />}
+      {world.warung && <Warung w={world.warung} t={t} consumed={consumed} Person={Person} DoorSign={DoorSign} onOrder={onOrder} />}
       <Animals world={world} lang={lang} consumed={consumed} />
       <Boats Person={Person} />
       <WindStreaks center={playerRef} />
@@ -786,6 +786,8 @@ export default function Scene({
         wakeText={t.wakeText[timeMode]}
         exploreText={t.exploreText}
         onDialog={onDialog}
+        eatTexts={t.warung}
+        onAte={onAte}
         onClick={() => {
           consumed.current = performance.now()
           onAvatarClick()

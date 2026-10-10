@@ -222,6 +222,8 @@ export function generateWorld() {
     if (d > edgeOf(x, z) - 3 || d < 7) return
     if (roadDist(x, z) < 2.5 || plotDist(x, z) < 3 || nearPond(x, z) < POND.r + 2.5 || nearFarm(x, z) < 3) return
     if (lamps.some(([lx, lz]) => Math.hypot(lx - x, lz - z) < 2.5)) return
+    // area depan pintu tiap bangunan harus bersih (supaya bangunan & papan namanya kelihatan)
+    if (plots.some((p) => distToSeg(x, z, p.door, [p.door[0] + p.f[0] * 12, p.door[1] + p.f[1] * 12]) < p.half + 3)) return
     if (trees.some(([tx, tz]) => Math.hypot(tx - x, tz - z) < (d > VILLAGE ? 5 : 7))) return
     trees.push([x, z])
     const th = 4 + Math.floor(rand() * 3)
@@ -280,6 +282,16 @@ export function generateWorld() {
     }
   }
   for (const p of plots) if (p.desk) walk[idx(p.desk[0], p.desk[1])] = 0 // meja menghalangi
+
+  // ——— air yang bisa direnangi Zafira: laut di sekitar pulau + kolam ———
+  const swim = new Uint8Array(W * W)
+  for (let x = -SIZE; x <= SIZE; x++) {
+    for (let z = -SIZE; z <= SIZE; z++) {
+      const h = H(x, z)
+      if (h === -99) swim[idx(x, z)] = 1
+      else if (blocks.get(key(x, h, z)) === 'water' && !blocks.has(key(x, h + 1, z))) swim[idx(x, z)] = 1
+    }
+  }
   if (warung) for (const lx of [-1, 0, 1]) {
     const [x, z] = warung.tf(lx, -1)
     walk[idx(x, z)] = 0 // meja warung
@@ -323,7 +335,12 @@ export function generateWorld() {
   return {
     byType, plants, stations, pois,
     ground, canWalk,
-    findPath: (from, to) => findPath(walk, height, from, to),
+    findPath: (from, to, opts) => findPath(walk, height, from, to, opts?.swim ? swim : null),
+    isWater: (x, z) => {
+      const rx = Math.round(x)
+      const rz = Math.round(z)
+      return inside(rx, rz) && swim[idx(rx, rz)] === 1
+    },
     blockAt: (x, y, z) => blocks.get(key(x, y, z)),
     home,
     warung,
@@ -334,12 +351,14 @@ export function generateWorld() {
 //  A* di grid 2D + penghalusan jalur (supaya tidak zig-zag)
 // =====================================================================
 
-function findPath(walk, height, from, to) {
+function findPath(walk, rawHeight, from, to, swim = null) {
   const sx = Math.round(from[0])
   const sz = Math.round(from[1])
   let tx = Math.round(to[0])
   let tz = Math.round(to[1])
-  const ok = (x, z) => inside(x, z) && walk[idx(x, z)] === 1
+  const ok = (x, z) => inside(x, z) && (walk[idx(x, z)] === 1 || (swim && swim[idx(x, z)] === 1))
+  // laut (-99) dianggap setinggi -1 supaya bisa dimasuki dari pantai
+  const height = swim ? rawHeight.map((h) => (h === -99 ? -1 : h)) : rawHeight
   // kalau tujuan tidak bisa diinjak, cari sel terdekat yang bisa
   if (!ok(tx, tz)) {
     let best = null

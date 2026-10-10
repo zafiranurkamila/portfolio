@@ -260,6 +260,8 @@ export const UI = {
       name: 'Warung Mie Ayam',
       seller: 'Pak Mie',
       eatLine: 'Kenyang! Enak banget mie ayamnya.',
+      done: 'Mmm... enak banget! Kenyang!',
+      full: 'Yah, bangkunya penuh. Nanti balik lagi deh.',
       lines: [
         'Mie ayam, Kak? Hangat, baru matang!',
         'Pakai bakso juga enak, lho.',
@@ -286,6 +288,7 @@ export const UI = {
       visit: 'Kunjungi',
       play: 'Mainkan',
       talk: 'Ngobrol dengan warga',
+      eat: 'Makan mie ayam di warung',
       done: 'Quest selesai!',
       stageDone: 'Tahap 1 selesai!',
       suggest: 'Desa sudah kamu jelajahi! Sekarang main game di setiap pojok duniaku.',
@@ -369,6 +372,8 @@ export const UI = {
       name: 'Chicken Noodle Stall',
       seller: 'Mr. Noodle',
       eatLine: "I'm full! That chicken noodle was so good.",
+      done: "Mmm... so good! I'm full!",
+      full: "Oh, the benches are full. I'll come back later.",
       lines: [
         'Chicken noodles? Warm and freshly made!',
         'Try it with meatballs, too.',
@@ -394,6 +399,7 @@ export const UI = {
       visit: 'Visit',
       play: 'Play',
       talk: 'Talk to a villager',
+      eat: 'Eat chicken noodles at the stall',
       done: 'Quest complete!',
       stageDone: 'Stage 1 complete!',
       suggest: "You've explored the village! Now play the games in every corner of my world.",
