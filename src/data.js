@@ -257,7 +257,12 @@ export const UI = {
     close: 'Tutup',
     start: 'Mulai',
     music: 'Musik',
-    wakeText: 'Hoaam... pagi! Yuk mulai!',
+    // sapaan saat bangun, mengikuti mode waktu (jam pengunjung)
+    wakeText: {
+      pagi: 'Hoaam... pagi! Yuk mulai!',
+      sore: 'Hoaam... ketiduran sampai sore! Yuk mulai!',
+      malam: 'Hoaam... udah malam, tapi masih semangat! Yuk mulai!',
+    },
     exploreText: 'Waktunya eksplor!',
     homeLabel: 'Rumah Zafira',
     timeLabel: 'Ganti waktu',
@@ -351,7 +356,11 @@ export const UI = {
     close: 'Close',
     start: 'Start',
     music: 'Music',
-    wakeText: "Yawn... morning! Let's go!",
+    wakeText: {
+      pagi: "Yawn... good morning! Let's go!",
+      sore: "Yawn... I napped till the afternoon! Let's go!",
+      malam: "Yawn... it's already night, but I'm still up for it! Let's go!",
+    },
     exploreText: 'Time to explore!',
     homeLabel: "Zafira's Home",
     timeLabel: 'Change time of day',

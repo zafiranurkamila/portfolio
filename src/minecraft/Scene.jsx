@@ -689,7 +689,7 @@ export default function Scene({
         onManualMove={onManualMove}
         wake={wake}
         onWakeDone={onWakeDone}
-        wakeText={t.wakeText}
+        wakeText={t.wakeText[timeMode]}
         exploreText={t.exploreText}
         onDialog={onDialog}
         onClick={() => {
