@@ -633,3 +633,20 @@ main[data-panel='1'] .mc-talkbtn {
   height: 100%;
   background: #80ff20;
 }
+
+/* ——— foto studio ——— */
+.mc-flash {
+  background: #fff;
+  animation: flash 0.45s ease-out forwards;
+}
+@keyframes flash {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.mc-polaroid {
+  width: min(420px, 92vw);
+  padding: 14px 14px 16px;
+  background: #fbf8f1;
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.7);
+  transform: rotate(-1.5deg);
+}

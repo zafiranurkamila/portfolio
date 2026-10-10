@@ -9,7 +9,7 @@ import { blockIcon, textureURL } from './textures'
 import { fetchRecentRepos } from './github'
 import { UI, profile } from '../data'
 import {
-  startAmbient, stopAmbient, clickSound, advancementSound, unlockAudio, clingSound, typeSound,
+  startAmbient, stopAmbient, clickSound, advancementSound, unlockAudio, clingSound, typeSound, shutterSound,
 } from '../sound'
 
 const ICONS = ['grass', 'planks', 'bookshelf', 'crafting', 'glow', 'log', 'wool_red']
@@ -136,6 +136,28 @@ function Dialog({ text, name = 'Zafira', t, onEnd }) {
           <div className="mt-2 text-right text-[14px] text-[#7a4e22]">
             {typing ? '' : `${t.tapNext} ▼ (${Math.max(0, left)})`}
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Foto polaroid hasil jepretan Zahra (bisa diunduh)
+function Polaroid({ url, t, onClose }) {
+  const date = new Date().toLocaleDateString(t.studio.locale, { day: 'numeric', month: 'long', year: 'numeric' })
+  return (
+    <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="mc-polaroid mc-lift" onClick={(e) => e.stopPropagation()}>
+        <img src={url} alt={t.studio.caption} className="aspect-[4/3] w-full bg-black object-cover" />
+        <div className="mt-3 text-center text-[20px] text-[#3a2410]">{t.studio.caption}</div>
+        <div className="text-center text-[14px] text-[#7a5c33]">{date}</div>
+        <div className="mt-3 flex justify-center gap-2">
+          <a className="mc-btn" href={url} download="foto-bareng-zahra.jpg">
+            {t.studio.save}
+          </a>
+          <button className="mc-btn" onClick={onClose}>
+            {t.close}
+          </button>
         </div>
       </div>
     </div>
@@ -297,7 +319,7 @@ export default function MinecraftWorld() {
       questsRef.current = next
       setQuests(next)
       saveQuests(next)
-      const label = id === 'talk' || id === 'eat' || id === 'ekg' ? t.q[id] : labelMap[id]
+      const label = ['talk', 'eat', 'ekg', 'photo'].includes(id) ? t.q[id] : labelMap[id]
       pushToast({ icon: id.startsWith('game_') ? 'ore_diamond' : 'glow', title: t.q.done, text: label })
       if (sound) advancementSound()
       const exploreDone = EXPLORE_QUESTS.every((q) => next.has(q))
@@ -340,6 +362,25 @@ export default function MinecraftWorld() {
     },
     [sound, completeQuest],
   )
+
+  // ——— foto di studio Zahra ———
+  const captureRef = useRef(null)
+  const [flash, setFlash] = useState(false)
+  const [photo, setPhoto] = useState(null)
+  const takePhoto = useCallback(() => {
+    setFlash(true)
+    shutterSound()
+    setTimeout(() => {
+      try {
+        const url = captureRef.current?.()
+        if (url) setPhoto(url)
+      } catch (e) {
+        /* kanvas tidak bisa disalin */
+      }
+      setFlash(false)
+      completeQuest('photo')
+    }, 140)
+  }, [completeQuest])
 
   // pesan mie ayam → Zafira jalan ke warung, duduk, dan makan
   const orderNoodles = useCallback(() => {
@@ -459,6 +500,16 @@ export default function MinecraftWorld() {
             onWakeDone={() => setPhase('play')}
             onDialog={(text) => setDialog({ text, n: Math.random() })}
             onOrder={orderNoodles}
+            captureRef={captureRef}
+            onPhotographer={(to, face) => {
+              // Zafira berdiri di depan kamera, Zahra menyapa, lalu jepret!
+              clearTimeout(panelTimer.current)
+              setFocusId(null)
+              setActive('home')
+              setCommand({ type: 'move', to, face, run: true, n: Math.random() })
+              const [first, ...rest] = t.studio.lines.map((text) => ({ text, name: t.studio.photographer }))
+              setDialog({ ...first, rest, onDone: takePhoto, n: Math.random() })
+            }}
             onNurse={(to, face) => {
               // Zafira menghampiri Zulfa, lalu Zulfa menjelaskan EKG lewat dialog bawah
               clearTimeout(panelTimer.current)
@@ -565,6 +616,8 @@ export default function MinecraftWorld() {
       )}
 
       {!dialog && <Chat lines={chat} />}
+      {flash && <div className="mc-flash pointer-events-none fixed inset-0 z-[60]" />}
+      {photo && <Polaroid url={photo} t={t} onClose={() => setPhoto(null)} />}
       <Toasts toasts={toasts} />
 
       {panelOpen && (

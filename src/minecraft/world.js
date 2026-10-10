@@ -67,6 +67,8 @@ export function generateWorld() {
   plots.push({ ...makePlot('warung', 8, -15, 3, warungStall, true), deco: 'warung' })
   // puskesmas tempat Perawat Zulfa
   plots.push({ ...makePlot('puskesmas', 11, 21, 3, puskesmas, true), deco: 'puskesmas' })
+  // studio foto milik Zahra
+  plots.push({ ...makePlot('studio', -11, -20, 3, photoStudio, true), deco: 'studio' })
 
   const distToSeg = (px, pz, a, b) => {
     const dx = b[0] - a[0]
@@ -144,6 +146,7 @@ export function generateWorld() {
   let home = null
   let warung = null
   let clinic = null
+  let studio = null
   const stations = [{ id: 'home', x: 0, z: 0, height: 2, half: 2, outside: [0, 2], inside: [0, 2] }]
   for (const p of plots) {
     const place = (lx, ly, lz, t) => {
@@ -170,6 +173,14 @@ export function generateWorld() {
           nurse: tf(1.7, -p.half - 1.2),
           visitor: tf(0.2, -p.half - 2.6),
           monitor: tf(-2, -p.half - 0.53),
+        }
+      } else if (p.deco === 'studio') {
+        studio = {
+          x: p.x, z: p.z, height: h, rot, tf, half: p.half, door: p.door, outside: p.outside,
+          photographer: tf(1.9, -p.half - 1.3),
+          tripod: tf(0.3, -p.half - 2.0),
+          visitor: tf(0.3, -p.half - 4.6),
+          softbox: tf(-1.8, -p.half - 2.2),
         }
       } else {
         // kursi menghadap gerobak (+z lokal), meja di antara kursi & gerobak
@@ -355,6 +366,7 @@ export function generateWorld() {
     home,
     warung,
     clinic,
+    studio,
   }
 }
 
@@ -752,6 +764,31 @@ function puskesmas(place, h) {
   place(h - 1, 1, h - 1, 'bookshelf')
   place(-h + 1, 1, h - 1, 'wool_white')
   place(-h + 1, 1, h - 2, 'wool_white')
+  place(0, 3, 0, 'glow')
+  return 8
+}
+
+// =====================================================================
+//  Studio foto — dinding hitam, kaca besar, ikon kamera di atap
+// =====================================================================
+function photoStudio(place, h) {
+  floor(place, h, 'planks')
+  walls(place, h, 1, 3, (x, y, z) => {
+    if (z === -h && Math.abs(x) <= 2) return 'glass' // etalase kaca depan
+    if (Math.abs(x) === h && Math.abs(z) === h) return 'wool_white'
+    return 'wool_black'
+  })
+  door(place, h)
+  place(-1, 3, -h, 'glass')
+  for (let x = -h - 1; x <= h + 1; x++) for (let z = -h - 1; z <= h + 1; z++) place(x, 4, z, 'wool_white')
+  // ikon kamera di atap depan: badan hitam, lensa, blitz
+  for (let x = -2; x <= 2; x++) for (let y = 5; y <= 6; y++) place(x, y, -h, 'wool_black')
+  place(1, 7, -h, 'wool_black')
+  place(0, 5, -h - 1, 'glass')
+  place(0, 6, -h - 1, 'glass')
+  place(-2, 7, -h, 'glow')
+  // isi studio: latar putih & lampu
+  for (let x = -2; x <= 2; x++) for (let y = 1; y <= 3; y++) place(x, y, h - 1, 'wool_white')
   place(0, 3, 0, 'glow')
   return 8
 }

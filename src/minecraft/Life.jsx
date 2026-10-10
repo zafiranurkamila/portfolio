@@ -568,3 +568,81 @@ export function Clinic({ c, name, consumed, Person, onNurse, label }) {
     </>
   )
 }
+
+// ——— Studio foto: Zahra si fotografer, kamera di tripod, lampu softbox ———
+const PHOTOGRAPHER = { skin: '#e7b48f', hair: '#3b2a1d', shirt: '#2b2b2b', sleeve: '#2b2b2b', pants: '#c9b48a', longHair: true, cheeks: '#e89a86' }
+
+export function Studio({ s, name, consumed, Person, onPhotographer }) {
+  const still = useRef(false)
+  const [hover, setHover] = useState(false)
+  const { gl } = useThree()
+  const [px, pz] = s.photographer
+  const [tx, tz] = s.tripod
+  const [bx, bz] = s.softbox
+  // kamera tripod menghadap tempat Zafira berdiri
+  const camRot = Math.atan2(s.visitor[0] - tx, s.visitor[1] - tz)
+  const talk = (e) => {
+    e.stopPropagation()
+    consumed.current = performance.now()
+    onPhotographer(s.visitor, s.tripod)
+  }
+  return (
+    <>
+      {/* tripod + kamera */}
+      <group position={[tx, 0.5, tz]} rotation-y={camRot}>
+        {[0, 2.1, 4.2].map((a) => (
+          <Part
+            key={a}
+            p={[Math.sin(a) * 0.22, 0.6, Math.cos(a) * 0.22]}
+            s={[0.05, 1.25, 0.05]}
+            c="#3a3a3a"
+            rotation={[Math.cos(a) * 0.3, 0, -Math.sin(a) * 0.3]}
+          />
+        ))}
+        <Part p={[0, 1.32, 0]} s={[0.45, 0.32, 0.26]} c="#1d1d21" />
+        <Part p={[0, 1.32, 0.2]} s={[0.2, 0.2, 0.18]} c="#4a4a4a" />
+        <Part p={[0, 1.32, 0.3]} s={[0.14, 0.14, 0.02]} c="#6fb6e8" />
+        <Part p={[-0.12, 1.53, 0]} s={[0.12, 0.08, 0.12]} c="#e0e0e0" />
+      </group>
+      {/* lampu softbox */}
+      <group position={[bx, 0.5, bz]} rotation-y={camRot + 0.5}>
+        <Part p={[0, 0.9, 0]} s={[0.06, 1.8, 0.06]} c="#3a3a3a" />
+        <Part p={[0, 1.95, 0]} s={[0.8, 0.8, 0.3]} c="#2b2b2b" />
+        <mesh position={[0, 1.95, 0.16]}>
+          <planeGeometry args={[0.7, 0.7]} />
+          <meshBasicMaterial color="#fffbe8" />
+        </mesh>
+      </group>
+      {/* Zahra si fotografer */}
+      <group
+        position={[px, 0.5, pz]}
+        rotation-y={s.rot + Math.PI - 0.4}
+        scale={0.88}
+        onClick={talk}
+        onPointerOver={() => (gl.domElement.style.cursor = 'pointer')}
+        onPointerOut={() => (gl.domElement.style.cursor = 'grab')}
+      >
+        <Person look={PHOTOGRAPHER} moving={still}>
+          {/* kamera tergantung di leher */}
+          <Part p={[0, 1.05, 0.2]} s={[0.26, 0.18, 0.12]} c="#1d1d21" />
+          <Part p={[0, 1.05, 0.28]} s={[0.1, 0.1, 0.06]} c="#6fb6e8" />
+        </Person>
+        <mesh position={[0, 1, 0]} onClick={talk}>
+          <boxGeometry args={[1.4, 2.4, 1.4]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+        <Html position={[0, 2.45, 0]} zIndexRange={[18, 8]}>
+          <button
+            className={`mc-talkbtn ${hover ? 'is-hot' : ''}`}
+            onClick={talk}
+            onPointerEnter={() => setHover(true)}
+            onPointerLeave={() => setHover(false)}
+            aria-label={name}
+          >
+            💬{hover && <span className="ml-1">{name}</span>}
+          </button>
+        </Html>
+      </group>
+    </>
+  )
+}

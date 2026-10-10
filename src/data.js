@@ -256,6 +256,18 @@ export const UI = {
     off: 'Mati',
     close: 'Tutup',
     start: 'Mulai',
+    studio: {
+      name: 'Studio Foto',
+      photographer: 'Zahra',
+      caption: 'Foto bareng Zahra',
+      save: 'Simpan foto',
+      locale: 'id-ID',
+      lines: [
+        'Kak Zafira! Akhirnya mampir juga ke studioku.',
+        'Aku Zahra, fotografer di desa ini. Sini, Kak, berdiri di depan kamera.',
+        'Siap ya... satu, dua, tiga, senyum!',
+      ],
+    },
     clinic: {
       name: 'Puskesmas',
       nurse: 'Perawat Zulfa',
@@ -303,6 +315,7 @@ export const UI = {
       talk: 'Ngobrol dengan warga',
       eat: 'Makan mie ayam di warung',
       ekg: 'Tanya Perawat Zulfa soal EKG',
+      photo: 'Foto bareng Zahra di studio',
       done: 'Quest selesai!',
       stageDone: 'Tahap 1 selesai!',
       suggest: 'Desa sudah kamu jelajahi! Sekarang main game di setiap pojok duniaku.',
@@ -382,6 +395,18 @@ export const UI = {
     off: 'Off',
     close: 'Close',
     start: 'Start',
+    studio: {
+      name: 'Photo Studio',
+      photographer: 'Zahra',
+      caption: 'A photo with Zahra',
+      save: 'Save photo',
+      locale: 'en-US',
+      lines: [
+        'Zafira! You finally dropped by my studio.',
+        "I'm Zahra, the photographer in this village. Come stand in front of the camera.",
+        'Ready... one, two, three, smile!',
+      ],
+    },
     clinic: {
       name: 'Health Clinic',
       nurse: 'Nurse Zulfa',
@@ -428,6 +453,7 @@ export const UI = {
       talk: 'Talk to a villager',
       eat: 'Eat chicken noodles at the stall',
       ekg: 'Ask Nurse Zulfa about ECG',
+      photo: 'Take a photo with Zahra at the studio',
       done: 'Quest complete!',
       stageDone: 'Stage 1 complete!',
       suggest: "You've explored the village! Now play the games in every corner of my world.",

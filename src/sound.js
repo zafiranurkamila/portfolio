@@ -162,3 +162,25 @@ export function clingSound() {
     /* tidak didukung */
   }
 }
+
+// Bunyi jepret kamera (desis pendek)
+export function shutterSound() {
+  try {
+    ensureCtx()
+    const t = ctx.currentTime
+    const len = Math.floor(ctx.sampleRate * 0.12)
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate)
+    const d = buf.getChannelData(0)
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len)
+    const src = ctx.createBufferSource()
+    const g = ctx.createGain()
+    src.buffer = buf
+    g.gain.setValueAtTime(0.25, t)
+    src.connect(g)
+    g.connect(ctx.destination)
+    src.start(t)
+    beep(1800, t, 0.04, 0.05, 'square')
+  } catch (e) {
+    /* tidak didukung */
+  }
+}

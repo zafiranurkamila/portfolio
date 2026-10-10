@@ -6,7 +6,7 @@ import { generateWorld } from './world'
 import { Blocks, Plants } from './Blocks'
 import { Player, Villagers } from './People'
 import { repeatTexture, CUTAWAY, WIND } from './textures'
-import { Animals, Boats, WindStreaks, Warung, Clinic } from './Life'
+import { Animals, Boats, WindStreaks, Warung, Clinic, Studio } from './Life'
 import { Person } from './Person'
 import { rng } from './noise'
 import { describe, timeAgo } from './github'
@@ -383,6 +383,43 @@ function ZafiraHome({ world, home, label }) {
   )
 }
 
+// ambil "foto" dari tampilan 3D saat ini (render ulang lalu salin isi kanvas)
+// sudut foto: dari kamera tripod Zahra, menatap Zafira (seperti foto studio)
+function PhotoCapture({ captureRef, studio, playerRef }) {
+  const { gl, scene, camera } = useThree()
+  const flashLight = useRef()
+  useEffect(() => {
+    if (!captureRef) return
+    captureRef.current = () => {
+      const p = playerRef.current
+      const saved = { pos: camera.position.clone(), quat: camera.quaternion.clone(), view: camera.view && { ...camera.view } }
+      const cut = CUTAWAY.uOn.value
+      CUTAWAY.uOn.value = 0 // tanpa efek tembus pandang di foto
+      if (studio && p) {
+        const [tx, tz] = studio.tripod
+        // cahaya blitz dari arah kamera
+        flashLight.current.position.set(tx, 2.2, tz)
+        flashLight.current.intensity = 40
+        camera.clearViewOffset()
+        camera.position.set(tx, 1.85, tz)
+        camera.lookAt(p.position.x, p.position.y + 1.25, p.position.z)
+        camera.updateMatrixWorld()
+      }
+      gl.render(scene, camera)
+      const url = gl.domElement.toDataURL('image/jpeg', 0.92)
+      flashLight.current.intensity = 0
+      CUTAWAY.uOn.value = cut
+      // kembalikan kamera seperti semula
+      camera.position.copy(saved.pos)
+      camera.quaternion.copy(saved.quat)
+      if (saved.view?.enabled) camera.setViewOffset(saved.view.fullWidth, saved.view.fullHeight, saved.view.offsetX, saved.view.offsetY, saved.view.width, saved.view.height)
+      camera.updateMatrixWorld()
+      return url
+    }
+  }, [captureRef, gl, scene, camera, studio, playerRef])
+  return <pointLight ref={flashLight} intensity={0} distance={14} decay={1.4} color="#ffffff" />
+}
+
 // jam bersama untuk efek angin (rumput, bunga, daun)
 function WindClock() {
   useFrame(({ clock }) => {
@@ -755,7 +792,7 @@ function TargetMarker({ marker, world }) {
 export default function Scene({
   labels, hovered, setHovered, onSelect, command, bubble, onEnter, onNearDoor, onManualMove,
   onGroundClick, onAvatarClick, panelOpen, panelShift, marker, introActive, focusId, onPaper,
-  repo, lang, t, sound, onTalk, onApproach, timeMode = 'pagi', wake, onWakeDone, onDialog, onOrder, onAte, onNurse,
+  repo, lang, t, sound, onTalk, onApproach, timeMode = 'pagi', wake, onWakeDone, onDialog, onOrder, onAte, onNurse, onPhotographer, captureRef,
 }) {
   const world = useMemo(() => generateWorld(), [])
   const controls = useRef()
@@ -841,6 +878,22 @@ export default function Scene({
           />
         </>
       )}
+      {world.studio && (
+        <>
+          <Studio s={world.studio} name={t.studio.photographer} consumed={consumed} Person={Person} onPhotographer={onPhotographer} />
+          <RoofSign
+            world={world}
+            x={world.studio.x}
+            z={world.studio.z}
+            half={world.studio.half}
+            door={world.studio.door}
+            outside={world.studio.outside}
+            text={t.studio.name}
+            lift={1.2}
+          />
+        </>
+      )}
+      <PhotoCapture captureRef={captureRef} studio={world.studio} playerRef={playerRef} />
       {world.home && <ZafiraHome world={world} home={world.home} label={t.homeLabel} />}
       {world.stations.filter((s) => s.desk).map((s) => (
         <Desk key={s.id} s={s} lit={focusId === s.id} onPaper={onPaper} consumed={consumed} />
