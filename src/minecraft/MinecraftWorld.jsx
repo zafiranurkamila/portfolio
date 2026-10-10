@@ -553,8 +553,10 @@ export default function MinecraftWorld() {
       <header className={`pointer-events-none fixed left-3 top-3 z-20 transition-opacity duration-500 md:left-5 md:top-4 ${playing ? '' : 'opacity-0'}`}>
         <h1 className="mc-logo">{profile.name.toUpperCase()}</h1>
         {playing && online > 0 && (
-          <div className="mc-online mt-2">
-            <span className="mc-online-dot" /> {online} {t.mp.online}
+          // HP: di bawah baris tombol & teks singkat supaya tidak menabrak tombol
+          <div className="mc-online mt-11 md:mt-2">
+            <span className="mc-online-dot" /> {online} <span className="md:hidden">online</span>
+            <span className="hidden md:inline">{t.mp.online}</span>
           </div>
         )}
       </header>
