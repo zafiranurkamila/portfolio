@@ -1,5 +1,5 @@
-import World from './components/World'
+import MinecraftWorld from './minecraft/MinecraftWorld'
 
 export default function App() {
-  return <World />
+  return <MinecraftWorld />
 }

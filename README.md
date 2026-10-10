@@ -1,55 +1,40 @@
-# Zafira — Developer Portfolio
+# Zafira Nur Kamila — Portfolio
 
-Portfolio developer beranimasi. **Stack:** Vite + React + Tailwind CSS + Framer Motion.
+Portfolio interaktif berbentuk desa voxel. Jalan-jalan bareng karakter Zafira, masuk ke tiap bangunan untuk membaca isinya, ngobrol dengan warga, selesaikan quest, dan main 3 mini game di pojok dunia.
+
+**Stack:** Vite + React + Three.js (React Three Fiber + drei) + Tailwind CSS. Semua tekstur, karakter, dan suara dibuat lewat kode.
 
 ## Cara jalanin
 
 ```bash
-npm install      # sekali di awal (install dependency)
-npm run dev      # jalanin di http://localhost:5173
-```
-
-Buat versi produksi:
-
-```bash
-npm run build    # hasil di folder dist/
-npm run preview  # cek hasil build
+npm install      # sekali di awal
+npm run dev      # http://localhost:5173
+npm run build    # hasil produksi di folder dist/
 ```
 
 ## Struktur
 
 ```
 src/
-  App.jsx              # susunan halaman
-  index.css            # Tailwind + style global
-  components/
-    Cursor.jsx         # custom cursor (membesar saat hover)
-    Nav.jsx            # navbar
-    Hero.jsx           # judul + reveal per-huruf
-    Marquee.jsx        # teks berjalan
-    About.jsx          # profil + angka menghitung naik
-    Work.jsx           # daftar proyek
-    Skills.jsx         # daftar skill
-    Contact.jsx        # CTA + tombol magnetic
+  data.js                 # SEMUA konten (profil, proyek, perjalanan, teks UI 2 bahasa, dialog warga, quest)
+  sound.js                # musik latar & efek suara (Web Audio, tanpa file)
+  minecraft/
+    MinecraftWorld.jsx    # halaman utama: alur layar awal, HUD, quest, dialog
+    Scene.jsx             # dunia 3D: kamera, langit pagi/sore/malam, panggung, meja, awan
+    world.js              # generator dunia, bangunan, jalan, pathfinding (A*)
+    Blocks.jsx            # mesh blok (hanya sisi yang terlihat) & tanaman
+    People.jsx, Person.jsx# karakter Zafira (dikendalikan) & warga
+    Panel.jsx             # isi kertas tiap bangunan
+    Games.jsx             # mini game: Tambang, Memori Blok, Pukul Slime
+    Quests.jsx            # daftar quest
+    Intro.jsx             # perkenalan di awal
+    github.js             # ambil repo terbaru dari GitHub untuk panggung "Sedang Dikerjakan"
+    textures.js           # tekstur pixel 16×16 yang digambar lewat kode
 ```
-
-## Cara pakai komponen dari 21st.dev
-
-1. Buka https://21st.dev, cari komponen yang kamu suka.
-2. Copy kodenya, buat file baru di `src/components/`.
-3. Pastikan class Tailwind & warnanya cocok (`gold`, `bg`, `ink` sudah didefinisikan di `tailwind.config.js`).
-4. Import & pakai di `App.jsx`.
-
-## Kredit aset
-
-- Model 3D **Fox** (`public/models/Fox.glb`) — dari [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Fox).
-  Model oleh **PixelMannen** (CC0), rigging & animasi oleh **tomkranis** (CC-BY 4.0),
-  konversi oleh AsoboStudio & Microsoft. Jika dipublikasikan, cantumkan atribusi ini.
 
 ## Edit konten
 
-- **Nama & teks** → langsung di tiap file komponen.
-- **Warna tema** → `tailwind.config.js` bagian `colors`.
-- **Proyek** → array `projects` di `src/components/Work.jsx`.
-- **Skill** → array `skills` di `src/components/Skills.jsx`.
-- **Email / sosmed** → `Contact.jsx` & `App.jsx` (footer).
+- **Teks, proyek, perjalanan, sertifikat** → `src/data.js`.
+- **Panggung "Sedang Dikerjakan"** otomatis menampilkan repo GitHub yang terakhir di-push.
+  Untuk memberi judul/deskripsi khusus pada repo tertentu, tambahkan entri di `repoNotes` (`src/data.js`).
+- **Gambar proyek** → taruh di `public/images/` lalu sebut path-nya di `projects`.

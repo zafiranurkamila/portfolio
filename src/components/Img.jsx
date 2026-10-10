@@ -9,10 +9,10 @@ export default function Img({ src, alt = '', className = '' }) {
   if (error || !src) {
     return (
       <div
-        className={`flex flex-col items-center justify-center gap-2 bg-bg-2 text-center ${className}`}
+        className={`flex flex-col items-center justify-center gap-2 bg-[#d8cba5] text-center ${className}`}
       >
         <span className="text-2xl">🖼️</span>
-        <span className="px-4 text-[11px] font-semibold text-ink/60">
+        <span className="px-4 text-[11px] font-semibold text-[#4a3a24]">
           Taruh gambar di
           <br />
           <code className="font-bold text-accent">public/images/{fileName}</code>
