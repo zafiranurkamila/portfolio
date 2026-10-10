@@ -307,11 +307,25 @@ export const CUTAWAY = {
   uOn: { value: 0 },
 }
 
-function withCutaway(m) {
+// Waktu bersama untuk efek angin (diperbarui tiap frame dari Scene)
+export const WIND = { uTime: { value: 0 } }
+
+function withCutaway(m, sway = false) {
   m.onBeforeCompile = (shader) => {
-    Object.assign(shader.uniforms, CUTAWAY)
+    Object.assign(shader.uniforms, CUTAWAY, WIND)
     shader.vertexShader = `varying vec3 vCutPos;
-${shader.vertexShader}`.replace(
+uniform float uTime;
+${shader.vertexShader}`
+      .replace(
+        '#include <begin_vertex>',
+        sway
+          ? `#include <begin_vertex>
+      // daun bergoyang pelan tertiup angin
+      transformed.x += sin(uTime * 1.6 + transformed.y * 0.7 + transformed.z * 0.4) * 0.045;
+      transformed.z += cos(uTime * 1.3 + transformed.x * 0.5) * 0.035;`
+          : '#include <begin_vertex>',
+      )
+      .replace(
       '#include <project_vertex>',
       `#include <project_vertex>
       vec4 cutP = vec4(transformed, 1.0);
@@ -343,7 +357,7 @@ varying vec3 vCutPos;
         }`,
       )
   }
-  m.customProgramCacheKey = () => 'cutaway'
+  m.customProgramCacheKey = () => (sway ? 'cutaway-sway' : 'cutaway')
   return m
 }
 
@@ -361,7 +375,7 @@ export function blockMaterial(type) {
   let m
   if (type === 'glow') m = withCutaway(new THREE.MeshBasicMaterial({ map: tex('glow') }))
   else if (FACES[type]) m = FACES[type].map((n) => withCutaway(new THREE.MeshLambertMaterial(opts(n))))
-  else m = withCutaway(new THREE.MeshLambertMaterial(opts(type)))
+  else m = withCutaway(new THREE.MeshLambertMaterial(opts(type)), type === 'leaves')
   matCache[type] = m
   return m
 }
@@ -369,8 +383,24 @@ export function blockMaterial(type) {
 export function plantMaterial(name) {
   ensure()
   const key = 'plant_' + name
-  if (!matCache[key])
-    matCache[key] = new THREE.MeshLambertMaterial({ map: tex(name), alphaTest: 0.5, side: THREE.DoubleSide })
+  if (!matCache[key]) {
+    const m = new THREE.MeshLambertMaterial({ map: tex(name), alphaTest: 0.5, side: THREE.DoubleSide })
+    // rumput & bunga bergoyang: hanya bagian atas yang bergerak
+    m.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, WIND)
+      shader.vertexShader = `uniform float uTime;
+${shader.vertexShader}`.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+        vec4 plantPos = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+        float top = max(0.0, position.y + 0.5);
+        transformed.x += sin(uTime * 2.4 + plantPos.x * 0.6 + plantPos.z * 0.35) * 0.14 * top;
+        transformed.z += cos(uTime * 1.9 + plantPos.z * 0.5) * 0.08 * top;`,
+      )
+    }
+    m.customProgramCacheKey = () => 'plant-sway'
+    matCache[key] = m
+  }
   return matCache[key]
 }
 

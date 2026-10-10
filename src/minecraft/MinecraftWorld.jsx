@@ -482,8 +482,7 @@ export default function MinecraftWorld() {
           onClick={() => setTimeMode({ pagi: 'sore', sore: 'malam', malam: 'pagi' }[timeMode])}
           title={t.timeLabel}
         >
-          {{ pagi: '☀', sore: '🌇', malam: '🌙' }[timeMode]}{' '}
-          <span className="hidden sm:inline">{t.times[timeMode]}</span>
+          {t.times[timeMode]}
         </button>
         <button className="mc-btn" onClick={toggleMusic} aria-pressed={music}>
           {music ? '🎵' : '🔇'} <span className="hidden sm:inline">{t.music}: {music ? t.on : t.off}</span>

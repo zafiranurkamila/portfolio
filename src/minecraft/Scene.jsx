@@ -5,7 +5,8 @@ import * as THREE from 'three'
 import { generateWorld } from './world'
 import { Blocks, Plants } from './Blocks'
 import { Player, Villagers } from './People'
-import { repeatTexture, CUTAWAY } from './textures'
+import { repeatTexture, CUTAWAY, WIND } from './textures'
+import { Animals, Boats, WindStreaks } from './Life'
 import { rng } from './noise'
 import { describe, timeAgo } from './github'
 
@@ -269,6 +270,14 @@ function ZafiraHome({ home, label }) {
       </Html>
     </>
   )
+}
+
+// jam bersama untuk efek angin (rumput, bunga, daun)
+function WindClock() {
+  useFrame(({ clock }) => {
+    WIND.uTime.value = clock.elapsedTime
+  })
+  return null
 }
 
 // ——— Awan kotak datar yang melayang pelan ———
@@ -678,6 +687,10 @@ export default function Scene({
       <Sea />
       <Blocks byType={world.byType} blockAt={world.blockAt} />
       <Plants plants={world.plants} />
+      <WindClock />
+      <Animals world={world} lang={lang} consumed={consumed} />
+      <Boats />
+      <WindStreaks center={playerRef} />
       <Villagers world={world} playerRef={playerRef} consumed={consumed} villagers={t.villagers} sound={sound} onTalk={onTalk} onApproach={onApproach} />
       <Player
         world={world}
