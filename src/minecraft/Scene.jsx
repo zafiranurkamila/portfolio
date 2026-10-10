@@ -82,7 +82,7 @@ export function DoorSign({ pos, rot, text, width = 4.2 }) {
 
 // ——— papan nama besar di atas atap (dua sisi, ditopang 2 tiang kayu) ———
 // tinggi papan & panjang tiang dihitung dari bentuk atap supaya tiang selalu menempel
-function RoofSign({ world, x: cx, z: cz, half, door, outside, text, width = 6.5 }) {
+function RoofSign({ world, x: cx, z: cz, half, door, outside, text, width = 6.5, lift = 0.5 }) {
   const fx = outside[0] - door[0]
   const fz = outside[1] - door[1]
   const rot = Math.atan2(fx, fz)
@@ -100,7 +100,7 @@ function RoofSign({ world, x: cx, z: cz, half, door, outside, text, width = 6.5 
     const at = (lx) => [x + Math.cos(rot) * lx, z - Math.sin(rot) * lx]
     let max = 0
     for (let lx = -width / 2; lx <= width / 2; lx += 0.5) max = Math.max(max, topAt(...at(lx)))
-    const b = max + 0.5
+    const b = max + lift
     const px = width / 2 - 0.5
     return { bottom: b, posts: [-px, px].map((lx) => ({ lx, top: topAt(...at(lx)) })) }
   }, [world, x, z, rot, width])
@@ -837,6 +837,7 @@ export default function Scene({
             door={world.clinic.door}
             outside={world.clinic.outside}
             text={t.clinic.name}
+            lift={1.4}
           />
         </>
       )}

@@ -512,6 +512,7 @@ const NURSE = { skin: '#e7b48f', hair: '#2e1f17', shirt: '#f4f6f8', sleeve: '#f4
 export function Clinic({ c, name, consumed, Person, onNurse, label }) {
   const tex = useMemo(ecgTexture, [])
   const still = useRef(false)
+  const [hover, setHover] = useState(false)
   const { gl } = useThree()
   useFrame((_, dt) => {
     tex.offset.x = (tex.offset.x + dt * 0.35) % 1
@@ -553,8 +554,14 @@ export function Clinic({ c, name, consumed, Person, onNurse, label }) {
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
         <Html position={[0, 2.45, 0]} zIndexRange={[18, 8]}>
-          <button className="mc-talkbtn" onClick={talk} aria-label={name}>
-            💬 <span className="ml-1">{name}</span>
+          <button
+            className={`mc-talkbtn ${hover ? 'is-hot' : ''}`}
+            onClick={talk}
+            onPointerEnter={() => setHover(true)}
+            onPointerLeave={() => setHover(false)}
+            aria-label={name}
+          >
+            💬{hover && <span className="ml-1">{name}</span>}
           </button>
         </Html>
       </group>
