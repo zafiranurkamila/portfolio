@@ -646,3 +646,248 @@ export function Studio({ s, name, consumed, Person, onPhotographer }) {
     </>
   )
 }
+
+// ——— perahu dayung di dermaga (dipakai Zafira untuk keliling pulau) ———
+// posisi perahu diperbarui oleh Player saat sedang naik
+export const ROWBOAT = { x: 0, z: 0, rot: 0, riding: false, ready: false }
+
+export function RowBoat({ dock, onBoard, consumed, label }) {
+  const ref = useRef()
+  const oars = useRef([])
+  const { gl } = useThree()
+  const [hover, setHover] = useState(false)
+  useFrame(({ clock }) => {
+    const g = ref.current
+    if (!g) return
+    if (!ROWBOAT.ready) {
+      ROWBOAT.x = dock.boatDock[0]
+      ROWBOAT.z = dock.boatDock[1]
+      ROWBOAT.rot = dock.heading + Math.PI / 2
+      ROWBOAT.ready = true
+    }
+    const t = clock.elapsedTime
+    g.position.set(ROWBOAT.x, 0.28 + Math.sin(t * 1.6) * 0.05, ROWBOAT.z)
+    g.rotation.set(Math.cos(t * 1.2) * 0.03, ROWBOAT.rot, Math.sin(t * 1.4) * 0.04)
+    // dayung bergerak saat sedang dipakai
+    oars.current.forEach((o, i) => o && (o.rotation.x = ROWBOAT.riding ? Math.sin(t * 5) * 0.6 : 0.2 * (i ? 1 : -1)))
+  })
+  const board = (e) => {
+    e.stopPropagation()
+    consumed.current = performance.now()
+    onBoard()
+  }
+  return (
+    <group
+      ref={ref}
+      onClick={board}
+      onPointerOver={() => (gl.domElement.style.cursor = 'pointer')}
+      onPointerOut={() => (gl.domElement.style.cursor = 'grab')}
+    >
+      <Part p={[0, 0, 0]} s={[1.1, 0.35, 2.6]} c="#8a5a30" />
+      <Part p={[0, 0.18, 0]} s={[0.9, 0.06, 2.3]} c="#b08a53" />
+      <Part p={[0, 0.25, -1.25]} s={[0.7, 0.3, 0.2]} c="#6b4423" />
+      <Part p={[0, 0.25, 1.2]} s={[0.9, 0.3, 0.2]} c="#6b4423" />
+      <Part p={[0, 0.3, 0.2]} s={[1.0, 0.08, 0.3]} c="#6b4423" />
+      {[-1, 1].map((s, i) => (
+        <group key={s} ref={(el) => (oars.current[i] = el)} position={[s * 0.6, 0.35, 0.2]}>
+          <Part p={[s * 0.5, -0.1, 0]} s={[1.1, 0.06, 0.06]} c="#a8834f" rotation={[0, 0, s * -0.35]} />
+          <Part p={[s * 1.05, -0.32, 0]} s={[0.12, 0.25, 0.04]} c="#a8834f" />
+        </group>
+      ))}
+      <mesh position={[0, 0.5, 0]}>
+        <boxGeometry args={[1.8, 1.6, 3]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+      <Html position={[0, 1.4, 0]} zIndexRange={[18, 8]}>
+        <button
+          className={`mc-talkbtn ${hover ? 'is-hot' : ''}`}
+          onClick={board}
+          onPointerEnter={() => setHover(true)}
+          onPointerLeave={() => setHover(false)}
+        >
+          ⛵ <span className="ml-1">{label}</span>
+        </button>
+      </Html>
+    </group>
+  )
+}
+
+// ——— pemancing di ujung dermaga ———
+const FISHER = { skin: '#c98f6b', hair: '#5b3a22', shirt: '#4f7a9a', pants: '#3b3b3b', sleeve: '#4f7a9a' }
+
+export function Fisherman({ dock, t, consumed, Person }) {
+  const pose = useRef({ legs: -Math.PI / 2, fishing: true })
+  const still = useRef(false)
+  const bob = useRef()
+  const fish = useRef()
+  const [say, setSay] = useState(null)
+  const idx = useRef(0)
+  const { gl } = useThree()
+  const [fx, fz] = dock.fisher
+  const [bx, bz] = dock.bobber
+  const catchT = useRef(6)
+  useFrame(({ clock }, dt) => {
+    const time = clock.elapsedTime
+    catchT.current -= dt
+    // pelampung naik-turun; menjelang dapat ikan, pelampung tenggelam
+    const dip = catchT.current < 1.2 && catchT.current > 0 ? -0.25 : 0
+    if (bob.current) bob.current.position.y = 0.35 + Math.sin(time * 2) * 0.04 + dip
+    if (fish.current) {
+      if (catchT.current <= 0 && catchT.current > -1.2) {
+        const k = -catchT.current / 1.2
+        fish.current.visible = true
+        fish.current.position.set(bx, 0.3 + Math.sin(k * Math.PI) * 1.8, bz)
+        fish.current.rotation.z = k * 6
+      } else fish.current.visible = false
+    }
+    if (catchT.current <= -1.2) {
+      catchT.current = 8 + Math.random() * 8
+      setSay(t.fisher.catch)
+      setTimeout(() => setSay(null), 2200)
+    }
+  })
+  const talk = (e) => {
+    e.stopPropagation()
+    consumed.current = performance.now()
+    setSay(t.fisher.lines[idx.current % t.fisher.lines.length])
+    idx.current += 1
+    typeSound()
+    setTimeout(() => setSay(null), 3500)
+  }
+  // joran dari tangan ke arah pelampung
+  return (
+    <>
+      <group
+        position={[fx, 0.5 - 0.56, fz]}
+        rotation-y={dock.heading}
+        scale={0.9}
+        onClick={talk}
+        onPointerOver={() => (gl.domElement.style.cursor = 'pointer')}
+        onPointerOut={() => (gl.domElement.style.cursor = 'grab')}
+      >
+        <Person look={FISHER} moving={still} pose={pose}>
+          {/* topi */}
+          <Part p={[0, 2.03, 0]} s={[0.6, 0.06, 0.6]} c="#c9b48a" />
+          <Part p={[0, 2.12, 0]} s={[0.4, 0.14, 0.4]} c="#c9b48a" />
+        </Person>
+        {/* joran */}
+        <Part p={[0, 1.55, 1.4]} s={[0.05, 0.05, 2.6]} c="#6b4423" rotation={[-0.45, 0, 0]} />
+        <mesh position={[0, 0.75, 2.75]}>
+          <boxGeometry args={[0.01, 1.7, 0.01]} />
+          <meshBasicMaterial color="#e8e8e8" />
+        </mesh>
+        <mesh position={[0, 1.2, 0]} onClick={talk}>
+          <boxGeometry args={[1.2, 2.2, 1.2]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+        <Html position={[0, 2.5, 0]} zIndexRange={[18, 8]} style={{ pointerEvents: 'none' }}>
+          {say ? (
+            <div className="mc-speech">
+              <div className="mc-speech-name">{t.fisher.name}</div>
+              {say}
+            </div>
+          ) : null}
+        </Html>
+      </group>
+      <mesh ref={bob} position={[bx, 0.35, bz]}>
+        <boxGeometry args={[0.16, 0.16, 0.16]} />
+        <meshLambertMaterial color="#d8312a" />
+      </mesh>
+      <group ref={fish} visible={false}>
+        <Part p={[0, 0, 0]} s={[0.12, 0.22, 0.45]} c="#f08a3c" />
+        <Part p={[0, 0, -0.28]} s={[0.04, 0.22, 0.14]} c="#e06a20" />
+      </group>
+    </>
+  )
+}
+
+// ——— petani bercaping memanen padi di sawah ———
+const FARMER = { skin: '#b97d55', hair: '#2e1f17', shirt: '#6f8f3a', pants: '#4a3a24', sleeve: '#6f8f3a' }
+
+export function Farmer({ farm, t, consumed, Person }) {
+  const group = useRef()
+  const moving = useRef(false)
+  const pose = useRef({ legs: null, harvest: false })
+  const [say, setSay] = useState(null)
+  const idx = useRef(0)
+  const { gl } = useThree()
+  // jalur kerja: baris kiri & kanan saluran air, menyeberang lewat pematang
+  const route = useMemo(() => {
+    const { x, z, half } = farm
+    const L = x - 2
+    const R = x + 2
+    return [[L, z - half + 0.5], [L, z + half - 0.5], [x, z + half + 1], [R, z + half - 0.5], [R, z - half + 0.5], [x, z - half - 1]]
+  }, [farm])
+  const st = useRef({ i: 0, work: 0 })
+  useFrame((_, rawDt) => {
+    const g = group.current
+    if (!g) return
+    const dt = Math.min(rawDt, 0.05)
+    const s = st.current
+    if (say) {
+      moving.current = false
+      pose.current.harvest = false
+      return
+    }
+    if (s.work > 0) {
+      s.work -= dt
+      moving.current = false
+      pose.current.harvest = true
+      return
+    }
+    pose.current.harvest = false
+    const [tx, tz] = route[s.i]
+    const dx = tx - g.position.x
+    const dz = tz - g.position.z
+    const d = Math.hypot(dx, dz)
+    if (d < 0.1) {
+      s.i = (s.i + 1) % route.length
+      return
+    }
+    const step = Math.min(d, 1.1 * dt)
+    g.position.x += (dx / d) * step
+    g.position.z += (dz / d) * step
+    g.rotation.y = Math.atan2(dx, dz)
+    moving.current = true
+    // sesekali berhenti memanen
+    if (Math.random() < dt * 0.35) s.work = 2 + Math.random() * 2
+  })
+  const talk = (e) => {
+    e.stopPropagation()
+    consumed.current = performance.now()
+    setSay(t.farmer.lines[idx.current % t.farmer.lines.length])
+    idx.current += 1
+    typeSound()
+    setTimeout(() => setSay(null), 3500)
+  }
+  return (
+    <group
+      ref={group}
+      position={[route[0][0], 0.5, route[0][1]]}
+      scale={0.9}
+      onClick={talk}
+      onPointerOver={() => (gl.domElement.style.cursor = 'pointer')}
+      onPointerOut={() => (gl.domElement.style.cursor = 'grab')}
+    >
+      <Person look={FARMER} moving={moving} pose={pose}>
+        {/* caping (topi kerucut) */}
+        <mesh position={[0, 2.12, 0]} castShadow>
+          <coneGeometry args={[0.62, 0.32, 8]} />
+          <meshLambertMaterial color="#d9b878" />
+        </mesh>
+      </Person>
+      <mesh position={[0, 1.1, 0]} onClick={talk}>
+        <boxGeometry args={[1.2, 2.2, 1.2]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+      <Html position={[0, 2.5, 0]} zIndexRange={[18, 8]} style={{ pointerEvents: 'none' }}>
+        {say ? (
+          <div className="mc-speech">
+            <div className="mc-speech-name">{t.farmer.name}</div>
+            {say}
+          </div>
+        ) : null}
+      </Html>
+    </group>
+  )
+}

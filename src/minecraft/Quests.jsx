@@ -7,11 +7,11 @@ import { blockIcon } from './textures'
 // =====================================================================
 
 export const EXPLORE_QUESTS = ['now', 'about', 'education', 'tech', 'work', 'journey', 'contact', 'talk', 'eat', 'ekg', 'photo']
-export const GAME_QUESTS = ['game_mine', 'game_memory', 'game_slime']
+export const GAME_QUESTS = ['game_mine', 'game_memory', 'game_slime', 'boat']
 
 const ICON = {
   now: 'stonebrick', about: 'planks', education: 'bookshelf', tech: 'crafting', work: 'glow',
-  journey: 'log', contact: 'wool_blue', talk: 'wool_white', eat: 'wool_red', ekg: 'wool_green', photo: 'glass',
+  journey: 'log', contact: 'wool_blue', talk: 'wool_white', eat: 'wool_red', ekg: 'wool_green', photo: 'glass', boat: 'planks',
   game_mine: 'ore_diamond', game_memory: 'crafting', game_slime: 'slime',
 }
 
@@ -113,7 +113,14 @@ export function QuestLog({ done, t, labels, onGo, compact }) {
               <div className="mt-3 font-pixel text-[9px] text-[#ffd451]">{t.q.games}</div>
               <ul className="mt-2 space-y-0.5">
                 {GAME_QUESTS.map((id) => (
-                  <Item key={id} id={id} done={done.has(id)} label={`${t.q.play} ${labels[id]}`} hint={t.q.where[id]} onGo={onGo} />
+                  <Item
+                    key={id}
+                    id={id}
+                    done={done.has(id)}
+                    label={id === 'boat' ? t.q.boat : `${t.q.play} ${labels[id]}`}
+                    hint={t.q.where[id]}
+                    onGo={onGo}
+                  />
                 ))}
               </ul>
             </>

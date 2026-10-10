@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { rng } from './noise'
 import { Person } from './Person'
 import { typeSound } from '../sound'
+import { ROWBOAT } from './Life'
 
 // ——— jalan mengikuti antrean titik (hasil A*), tinggi mengikuti tanah ———
 function stepAlong(group, queue, speed, dt) {
@@ -68,7 +69,7 @@ const KEYS = {
 }
 
 // Zafira = karakter yang kamu kendalikan
-export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor, onManualMove, onClick, wake, onWakeDone, wakeText, exploreText, onDialog, eatTexts, onAte }) {
+export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor, onManualMove, onClick, wake, onWakeDone, wakeText, exploreText, onDialog, eatTexts, onAte, rideTexts, onRideDone }) {
   const [eatingUI, setEatingUI] = useState(false)
   const eatFill = useRef()
   const group = playerRef
@@ -87,6 +88,7 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
   const pose = useRef({ legs: null })
   const meal = useRef({ seat: -1, time: 0, pending: false })
   const swimT = useRef(0)
+  const ride = useRef({ pending: false, active: false, i: 0 })
   const ripple = useRef()
   const standUpFromMeal = (g) => {
     const M = meal.current
@@ -202,6 +204,8 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
   useEffect(() => {
     if (!command) return
     const g = group.current
+    if (ride.current.active) return // sedang berlayar: tunggu sampai kembali ke dermaga
+    ride.current.pending = false
     // perintah baru → berhenti makan dulu (kalau sedang di warung)
     standUpFromMeal(g)
     const from = [g.position.x, g.position.z]
@@ -211,6 +215,17 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
         g.position.set(to[0], world.ground(to[0], to[1]) + 0.5, to[1])
         queue.current = [...extra]
       } else queue.current = [...path, ...extra]
+    }
+    if (command.type === 'boat') {
+      // jalan ke dermaga, lalu naik perahu
+      const D = world.dock
+      if (!D) return
+      ride.current = { pending: true, active: false, i: 0 }
+      insideId.current = null
+      pendingEnter.current = null
+      speed.current = 7
+      go(D.board)
+      return
     }
     if (command.type === 'eat') {
       // pesan mie ayam → jalan ke bangku kosong, lalu duduk makan
@@ -269,6 +284,49 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
     if (wake && world.home) {
       runWake(g, dt)
       return
+    }
+
+    // ——— naik perahu: duduk di perahu yang berlayar keliling pulau ———
+    const R = ride.current
+    if (R.active) {
+      const pts = world.dock.ride
+      const [tx, tz] = pts[R.i]
+      const dx = tx - ROWBOAT.x
+      const dz = tz - ROWBOAT.z
+      const d = Math.hypot(dx, dz)
+      if (d < 0.3) {
+        R.i += 1
+        if (R.i >= pts.length) {
+          // selesai: turun kembali ke dermaga
+          R.active = false
+          ROWBOAT.riding = false
+          ROWBOAT.x = world.dock.boatDock[0]
+          ROWBOAT.z = world.dock.boatDock[1]
+          ROWBOAT.rot = world.dock.heading + Math.PI / 2
+          pose.current.legs = null
+          const [bx, bz] = world.dock.board
+          g.position.set(bx, world.ground(bx, bz) + 0.5, bz)
+          setSay(rideTexts.done)
+          setTimeout(() => setSay(null), 3000)
+          onRideDone()
+        }
+      } else {
+        const step = Math.min(d, 6 * dt)
+        ROWBOAT.x += (dx / d) * step
+        ROWBOAT.z += (dz / d) * step
+        let diff = Math.atan2(dx, dz) - ROWBOAT.rot
+        diff = Math.atan2(Math.sin(diff), Math.cos(diff))
+        ROWBOAT.rot += diff * Math.min(1, dt * 3)
+      }
+      if (R.active) {
+        g.position.set(ROWBOAT.x, 0.38, ROWBOAT.z)
+        g.rotation.y = ROWBOAT.rot
+        pose.current.legs = -Math.PI / 2
+        pose.current.swim = false
+        moving.current = false
+        if (ripple.current) ripple.current.visible = false
+        return
+      }
     }
 
     // ——— makan mie ayam di warung ———
@@ -339,6 +397,12 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
       g.userData.face = undefined
     } else {
       moving.current = stepAlong(g, queue.current, speed.current, dt)
+      if (!moving.current && ride.current.pending) {
+        ride.current = { pending: false, active: true, i: 1 }
+        ROWBOAT.riding = true
+        setSay(rideTexts.start)
+        setTimeout(() => setSay(null), 2500)
+      }
       if (!moving.current && meal.current.pending) {
         meal.current.pending = false
         meal.current.time = 7

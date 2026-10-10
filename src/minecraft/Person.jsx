@@ -101,6 +101,14 @@ export function Person({ look, moving, onClick, children, pose }) {
     const legs = pose?.current?.legs
     for (const [r, s] of [[armL, swing], [armR, -swing], [legL, -swing], [legR, swing]])
       r.current.rotation.x += (s - r.current.rotation.x) * ease
+    if (pose?.current?.fishing) {
+      armL.current.rotation.x = -1.1
+      armR.current.rotation.x = -1.1 + Math.sin(t.current * 0.8) * 0.05
+    }
+    if (pose?.current?.harvest) {
+      armR.current.rotation.x = -0.9 + Math.sin(t.current * 6) * 0.7
+      armL.current.rotation.x = -0.4
+    }
     if (pose?.current?.swim) {
       // gaya bebas: tangan berputar bergantian, kaki menendang kecil
       const tt = t.current * (m ? 1.4 : 0.6)

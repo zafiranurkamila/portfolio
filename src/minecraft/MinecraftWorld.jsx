@@ -319,7 +319,7 @@ export default function MinecraftWorld() {
       questsRef.current = next
       setQuests(next)
       saveQuests(next)
-      const label = ['talk', 'eat', 'ekg', 'photo'].includes(id) ? t.q[id] : labelMap[id]
+      const label = ['talk', 'eat', 'ekg', 'photo', 'boat'].includes(id) ? t.q[id] : labelMap[id]
       pushToast({ icon: id.startsWith('game_') ? 'ore_diamond' : 'glow', title: t.q.done, text: label })
       if (sound) advancementSound()
       const exploreDone = EXPLORE_QUESTS.every((q) => next.has(q))
@@ -501,6 +501,13 @@ export default function MinecraftWorld() {
             onDialog={(text) => setDialog({ text, n: Math.random() })}
             onOrder={orderNoodles}
             captureRef={captureRef}
+            onBoard={() => {
+              clearTimeout(panelTimer.current)
+              setFocusId(null)
+              setActive('home')
+              setCommand({ type: 'boat', n: Math.random() })
+            }}
+            onRideDone={() => completeQuest('boat')}
             onPhotographer={(to, face) => {
               // Zafira berdiri di depan kamera, Zahra menyapa, lalu jepret!
               clearTimeout(panelTimer.current)
@@ -591,7 +598,13 @@ export default function MinecraftWorld() {
           t={t}
           labels={labelMap}
           compact={panelOpen || !!focusId}
-          onGo={(id) => (id === 'eat' ? orderNoodles() : select(id === 'now' ? 'home' : id))}
+          onGo={(id) =>
+            id === 'eat'
+              ? orderNoodles()
+              : id === 'boat'
+                ? setCommand({ type: 'boat', n: Math.random() })
+                : select(id === 'now' ? 'home' : id)
+          }
         />
       )}
       {showComplete && <QuestComplete t={t} onClose={() => setShowComplete(false)} />}

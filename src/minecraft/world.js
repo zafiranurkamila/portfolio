@@ -15,6 +15,7 @@ const RING = 21 // jarak bangunan dari alun-alun
 const ROAD_RING = 12
 const POND = { x: 25, z: 1, r: 3.2 }
 const FARM = { x: -26, z: 0, half: 3 }
+const DOCK_ANGLE = (-95 * Math.PI) / 180 // dermaga di pantai utara
 
 const key = (x, y, z) => `${x},${y},${z}`
 
@@ -33,6 +34,8 @@ export function generateWorld() {
   const set = (x, y, z, t) => blocks.set(key(x, y, z), t)
   const del = (x, y, z) => blocks.delete(key(x, y, z))
   const rand = rng(2026)
+
+  const edgeOf = (x, z) => LAND * (0.86 + 0.14 * noise2(x / 11 + 40, z / 11 + 40, 3))
 
   // ——— rencana bangunan ———
   const builders = { about: house, education: library, tech: workshop, work: gallery, journey: tower, contact: cottage }
@@ -70,6 +73,16 @@ export function generateWorld() {
   // studio foto milik Zahra
   plots.push({ ...makePlot('studio', -11, -20, 3, photoStudio, true), deco: 'studio' })
 
+  // dermaga di pantai utara: cari garis pantai di arah DOCK_ANGLE
+  const ux = Math.cos(DOCK_ANGLE)
+  const uz = Math.sin(DOCK_ANGLE)
+  let shoreR = 30
+  while (shoreR < 58 && Math.hypot(ux * shoreR, uz * shoreR) <= edgeOf(ux * shoreR, uz * shoreR)) shoreR += 0.25
+  plots.push({
+    ...makePlot('dock', Math.round(ux * (shoreR - 3)), Math.round(uz * (shoreR - 3)), 1, () => 2, true),
+    deco: 'dock',
+  })
+
   const distToSeg = (px, pz, a, b) => {
     const dx = b[0] - a[0]
     const dz = b[1] - a[1]
@@ -87,7 +100,6 @@ export function generateWorld() {
   const nearFarm = (x, z) => Math.max(Math.abs(x - FARM.x), Math.abs(z - FARM.z)) - FARM.half
 
   // ——— tinggi medan per kolom ———
-  const edgeOf = (x, z) => LAND * (0.86 + 0.14 * noise2(x / 11 + 40, z / 11 + 40, 3))
   const height = new Int16Array(W * W).fill(-99) // -99 = laut
   const isSand = new Uint8Array(W * W)
   for (let x = -SIZE; x <= SIZE; x++) {
@@ -147,6 +159,7 @@ export function generateWorld() {
   let warung = null
   let clinic = null
   let studio = null
+  let dock = null
   const stations = [{ id: 'home', x: 0, z: 0, height: 2, half: 2, outside: [0, 2], inside: [0, 2] }]
   for (const p of plots) {
     const place = (lx, ly, lz, t) => {
@@ -173,6 +186,37 @@ export function generateWorld() {
           nurse: tf(1.7, -p.half - 1.2),
           visitor: tf(0.2, -p.half - 2.6),
           monitor: tf(-2, -p.half - 0.53),
+        }
+      } else if (p.deco === 'dock') {
+        // jembatan kayu (pier) menjorok ke laut, lebar 3 blok
+        const px = -uz
+        const pz = ux
+        const cells = new Set()
+        for (let r = shoreR - 2; r <= shoreR + 6; r += 0.5)
+          for (const w of [-1, 0, 1]) cells.add(`${Math.round(ux * r + px * w)},${Math.round(uz * r + pz * w)}`)
+        for (const c of cells) {
+          const [x, z] = c.split(',').map(Number)
+          if (!inside(x, z)) continue
+          set(x, 0, z, 'planks')
+          if (!blocks.has(key(x, -1, z))) set(x, -1, z, 'log') // tiang penyangga
+          height[idx(x, z)] = 0
+        }
+        const end = shoreR + 5.6
+        const at = (r, w = 0) => [ux * r + px * w, uz * r + pz * w]
+        const boatDock = at(end - 1.5, 2.6)
+        const ride = [boatDock, at(66, 2.6)]
+        for (let k = 1; k <= 36; k++) {
+          const a = DOCK_ANGLE + (k * Math.PI * 2) / 36
+          ride.push([Math.cos(a) * 66, Math.sin(a) * 66])
+        }
+        ride.push(at(66, 2.6), boatDock)
+        dock = {
+          heading: Math.atan2(ux, uz), // arah menghadap laut
+          fisher: at(end, -0.6),
+          bobber: at(end + 3.2, -0.6),
+          board: at(end - 1.5, 1),
+          boatDock,
+          ride,
         }
       } else if (p.deco === 'studio') {
         studio = {
@@ -367,6 +411,8 @@ export function generateWorld() {
     warung,
     clinic,
     studio,
+    dock,
+    farm: FARM,
   }
 }
 

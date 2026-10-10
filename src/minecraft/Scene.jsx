@@ -6,7 +6,7 @@ import { generateWorld } from './world'
 import { Blocks, Plants } from './Blocks'
 import { Player, Villagers } from './People'
 import { repeatTexture, CUTAWAY, WIND } from './textures'
-import { Animals, Boats, WindStreaks, Warung, Clinic, Studio } from './Life'
+import { Animals, Boats, WindStreaks, Warung, Clinic, Studio, RowBoat, Fisherman, Farmer } from './Life'
 import { Person } from './Person'
 import { rng } from './noise'
 import { describe, timeAgo } from './github'
@@ -792,7 +792,7 @@ function TargetMarker({ marker, world }) {
 export default function Scene({
   labels, hovered, setHovered, onSelect, command, bubble, onEnter, onNearDoor, onManualMove,
   onGroundClick, onAvatarClick, panelOpen, panelShift, marker, introActive, focusId, onPaper,
-  repo, lang, t, sound, onTalk, onApproach, timeMode = 'pagi', wake, onWakeDone, onDialog, onOrder, onAte, onNurse, onPhotographer, captureRef,
+  repo, lang, t, sound, onTalk, onApproach, timeMode = 'pagi', wake, onWakeDone, onDialog, onOrder, onAte, onNurse, onPhotographer, captureRef, onBoard, onRideDone,
 }) {
   const world = useMemo(() => generateWorld(), [])
   const controls = useRef()
@@ -855,6 +855,8 @@ export default function Scene({
         exploreText={t.exploreText}
         onDialog={onDialog}
         eatTexts={t.warung}
+        rideTexts={t.ride}
+        onRideDone={onRideDone}
         onAte={onAte}
         onClick={() => {
           consumed.current = performance.now()
@@ -893,6 +895,13 @@ export default function Scene({
           />
         </>
       )}
+      {world.dock && (
+        <>
+          <RowBoat dock={world.dock} onBoard={onBoard} consumed={consumed} label={t.ride.label} />
+          <Fisherman dock={world.dock} t={t} consumed={consumed} Person={Person} />
+        </>
+      )}
+      <Farmer farm={world.farm} t={t} consumed={consumed} Person={Person} />
       <PhotoCapture captureRef={captureRef} studio={world.studio} playerRef={playerRef} />
       {world.home && <ZafiraHome world={world} home={world.home} label={t.homeLabel} />}
       {world.stations.filter((s) => s.desk).map((s) => (
