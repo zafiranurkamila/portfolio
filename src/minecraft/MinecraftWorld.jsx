@@ -80,7 +80,7 @@ function Loading({ t, done, hidden, onStart }) {
 
 // Kotak dialog bawah layar (pita kertas penuh) untuk adegan animasi.
 // Lanjut kalau diklik/ditekan, atau otomatis 10 detik setelah teks selesai.
-function Dialog({ text, t, onEnd }) {
+function Dialog({ text, name = 'Zafira', t, onEnd }) {
   const [shown, setShown] = useState(0)
   const [left, setLeft] = useState(10)
   const end = useRef(onEnd)
@@ -127,7 +127,7 @@ function Dialog({ text, t, onEnd }) {
     <div className="fixed inset-0 z-[42] cursor-pointer bg-black/20" onClick={next}>
       <div className="mc-dialogbar absolute inset-x-0 bottom-0">
         <div className="mx-auto max-w-3xl px-6 pb-7 pt-5">
-          <div className="mc-dialog-name">Zafira</div>
+          <div className="mc-dialog-name">{name}</div>
           <div className="mc-dialog-line !mx-0" />
           <p className="mt-3 min-h-[60px] text-[20px] leading-snug text-[#3a2410] md:text-[24px]">
             {text.slice(0, shown)}
@@ -297,7 +297,7 @@ export default function MinecraftWorld() {
       questsRef.current = next
       setQuests(next)
       saveQuests(next)
-      const label = id === 'talk' ? t.q.talk : id === 'eat' ? t.q.eat : labelMap[id]
+      const label = id === 'talk' || id === 'eat' || id === 'ekg' ? t.q[id] : labelMap[id]
       pushToast({ icon: id.startsWith('game_') ? 'ore_diamond' : 'glow', title: t.q.done, text: label })
       if (sound) advancementSound()
       const exploreDone = EXPLORE_QUESTS.every((q) => next.has(q))
@@ -459,6 +459,15 @@ export default function MinecraftWorld() {
             onWakeDone={() => setPhase('play')}
             onDialog={(text) => setDialog({ text, n: Math.random() })}
             onOrder={orderNoodles}
+            onNurse={(to, face) => {
+              // Zafira menghampiri Zulfa, lalu Zulfa menjelaskan EKG lewat dialog bawah
+              clearTimeout(panelTimer.current)
+              setFocusId(null)
+              setActive('home')
+              setCommand({ type: 'move', to, face, run: true, n: Math.random() })
+              const [first, ...rest] = t.clinic.lines.map((text) => ({ text, name: t.clinic.nurse }))
+              setDialog({ ...first, rest, onDone: () => completeQuest('ekg'), n: Math.random() })
+            }}
             onAte={() => completeQuest('eat')}
             focusId={focusId}
             onPaper={() => openPaper(focusId)}
@@ -536,7 +545,24 @@ export default function MinecraftWorld() {
       )}
       {showComplete && <QuestComplete t={t} onClose={() => setShowComplete(false)} />}
 
-      {dialog && <Dialog key={dialog.n} text={dialog.text} t={t} onEnd={() => setDialog(null)} />}
+      {dialog && (
+        <Dialog
+          key={dialog.n}
+          text={dialog.text}
+          name={dialog.name}
+          t={t}
+          onEnd={() => {
+            // dialog berantai: lanjut ke kalimat berikutnya, atau selesai
+            if (dialog.rest?.length) {
+              const [next, ...rest] = dialog.rest
+              setDialog({ ...next, rest, onDone: dialog.onDone, n: Math.random() })
+            } else {
+              setDialog(null)
+              dialog.onDone?.()
+            }
+          }}
+        />
+      )}
 
       {!dialog && <Chat lines={chat} />}
       <Toasts toasts={toasts} />

@@ -6,12 +6,12 @@ import { blockIcon } from './textures'
 //  Tahap 1: jelajahi desa → Tahap 2: main game di tiap pojok dunia
 // =====================================================================
 
-export const EXPLORE_QUESTS = ['now', 'about', 'education', 'tech', 'work', 'journey', 'contact', 'talk', 'eat']
+export const EXPLORE_QUESTS = ['now', 'about', 'education', 'tech', 'work', 'journey', 'contact', 'talk', 'eat', 'ekg']
 export const GAME_QUESTS = ['game_mine', 'game_memory', 'game_slime']
 
 const ICON = {
   now: 'stonebrick', about: 'planks', education: 'bookshelf', tech: 'crafting', work: 'glow',
-  journey: 'log', contact: 'wool_blue', talk: 'wool_white', eat: 'wool_red',
+  journey: 'log', contact: 'wool_blue', talk: 'wool_white', eat: 'wool_red', ekg: 'wool_green',
   game_mine: 'ore_diamond', game_memory: 'crafting', game_slime: 'slime',
 }
 
@@ -37,7 +37,7 @@ function Item({ id, done, label, hint, onGo }) {
       <button
         className={`flex w-full items-center gap-2 px-1 py-0.5 text-left hover:bg-white/10 ${done ? 'opacity-60' : ''}`}
         onClick={() => onGo(id)}
-        disabled={!onGo || id === 'talk'}
+        disabled={!onGo || id === 'talk' || id === 'ekg'}
       >
         <img src={blockIcon(ICON[id])} alt="" className="h-5 w-5 shrink-0 [image-rendering:pixelated]" />
         <span className="min-w-0 flex-1">
@@ -100,7 +100,7 @@ export function QuestLog({ done, t, labels, onGo, compact }) {
                     key={id}
                     id={id}
                     done={done.has(id)}
-                    label={id === 'talk' ? t.q.talk : id === 'eat' ? t.q.eat : `${t.q.visit} ${labels[id]}`}
+                    label={id === 'talk' || id === 'eat' || id === 'ekg' ? t.q[id] : `${t.q.visit} ${labels[id]}`}
                     onGo={onGo}
                   />
                 ))}

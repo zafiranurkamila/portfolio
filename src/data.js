@@ -256,6 +256,17 @@ export const UI = {
     off: 'Mati',
     close: 'Tutup',
     start: 'Mulai',
+    clinic: {
+      name: 'Puskesmas',
+      nurse: 'Perawat Zulfa',
+      lines: [
+        'Halo, Kak Zafira! Aku Zulfa, perawat di puskesmas ini.',
+        'Kakak tanya soal EKG, ya? EKG itu elektrokardiogram, pemeriksaan untuk merekam aktivitas listrik jantung.',
+        'Elektrodenya ditempel di dada, tangan, dan kaki. Hasilnya berupa garis bergelombang seperti di monitor itu.',
+        'Dari gelombang itu bisa kelihatan irama jantung normal atau tidak, termasuk detak tambahan yang datang terlalu cepat, namanya PVC.',
+        'Nah, asal PVC itu yang Kakak cari lewat Tugas Akhir, kan? Dari saluran keluar bilik kanan (RVOT) atau bilik kiri (LVOT). Semangat, Kak!',
+      ],
+    },
     warung: {
       name: 'Warung Mie Ayam',
       cartText: 'MIE AYAM',
@@ -291,6 +302,7 @@ export const UI = {
       play: 'Mainkan',
       talk: 'Ngobrol dengan warga',
       eat: 'Makan mie ayam di warung',
+      ekg: 'Tanya Perawat Zulfa soal EKG',
       done: 'Quest selesai!',
       stageDone: 'Tahap 1 selesai!',
       suggest: 'Desa sudah kamu jelajahi! Sekarang main game di setiap pojok duniaku.',
@@ -370,6 +382,17 @@ export const UI = {
     off: 'Off',
     close: 'Close',
     start: 'Start',
+    clinic: {
+      name: 'Health Clinic',
+      nurse: 'Nurse Zulfa',
+      lines: [
+        "Hi, Zafira! I'm Zulfa, the nurse at this clinic.",
+        "You're asking about ECG? An ECG (electrocardiogram) is a test that records the heart's electrical activity.",
+        'Electrodes are placed on the chest, arms, and legs. The result is a wavy line like the one on that monitor.',
+        'From those waves we can see if the heart rhythm is normal, including extra beats that come too early, called PVCs.',
+        "And finding where those PVCs come from is your final project, right? The right ventricular outflow tract (RVOT) or the left one (LVOT). You've got this!",
+      ],
+    },
     warung: {
       name: 'Chicken Noodle Stall',
       cartText: 'MIE AYAM',
@@ -404,6 +427,7 @@ export const UI = {
       play: 'Play',
       talk: 'Talk to a villager',
       eat: 'Eat chicken noodles at the stall',
+      ekg: 'Ask Nurse Zulfa about ECG',
       done: 'Quest complete!',
       stageDone: 'Stage 1 complete!',
       suggest: "You've explored the village! Now play the games in every corner of my world.",

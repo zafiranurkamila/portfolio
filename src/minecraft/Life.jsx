@@ -481,3 +481,83 @@ export function Warung({ w, t, consumed, Person, DoorSign, onOrder }) {
     </>
   )
 }
+
+// ——— Puskesmas: monitor EKG bergerak + Perawat Zulfa ———
+function ecgTexture() {
+  const c = document.createElement('canvas')
+  c.width = 256
+  c.height = 96
+  const g = c.getContext('2d')
+  g.fillStyle = '#081a10'
+  g.fillRect(0, 0, 256, 96)
+  g.strokeStyle = 'rgba(80,255,120,0.12)'
+  for (let x = 0; x < 256; x += 16) g.strokeRect(x, 0, 16, 96)
+  // satu detak: garis datar → P → QRS tajam → T
+  g.strokeStyle = '#5dff7a'
+  g.lineWidth = 4
+  g.beginPath()
+  const base = 60
+  const pts = [[0, base], [40, base], [52, base - 8], [64, base], [78, base], [86, base + 10], [96, 10], [106, base + 22], [114, base], [140, base], [158, base - 14], [176, base], [256, base]]
+  pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)))
+  g.stroke()
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  t.wrapS = THREE.RepeatWrapping
+  t.repeat.set(1.5, 1)
+  return t
+}
+
+const NURSE = { skin: '#e7b48f', hair: '#2e1f17', shirt: '#f4f6f8', sleeve: '#f4f6f8', pants: '#f4f6f8', longHair: true, cheeks: '#e89a86' }
+
+export function Clinic({ c, name, consumed, Person, onNurse, label }) {
+  const tex = useMemo(ecgTexture, [])
+  const still = useRef(false)
+  const { gl } = useThree()
+  useFrame((_, dt) => {
+    tex.offset.x = (tex.offset.x + dt * 0.35) % 1
+  })
+  const [mx, mz] = c.monitor
+  const [nx, nz] = c.nurse
+  const talk = (e) => {
+    e.stopPropagation()
+    consumed.current = performance.now()
+    onNurse(c.visitor, c.nurse)
+  }
+  return (
+    <>
+      {/* monitor EKG di dinding depan */}
+      <group position={[mx, 2.1, mz]} rotation-y={c.rot + Math.PI}>
+        <Part p={[0, 0, -0.04]} s={[1.5, 0.75, 0.08]} c="#2b2b2b" />
+        <mesh position={[0, 0, 0.005]}>
+          <planeGeometry args={[1.32, 0.6]} />
+          <meshBasicMaterial map={tex} toneMapped={false} />
+        </mesh>
+      </group>
+      {/* Perawat Zulfa */}
+      <group
+        position={[nx, 0.5, nz]}
+        rotation-y={c.rot + Math.PI}
+        scale={0.88}
+        onClick={talk}
+        onPointerOver={() => (gl.domElement.style.cursor = 'pointer')}
+        onPointerOut={() => (gl.domElement.style.cursor = 'grab')}
+      >
+        <Person look={NURSE} moving={still}>
+          {/* topi perawat dengan palang merah */}
+          <Part p={[0, 2.05, 0.02]} s={[0.42, 0.12, 0.36]} c="#ffffff" />
+          <Part p={[0, 2.06, 0.21]} s={[0.08, 0.08, 0.01]} c="#d8312a" />
+          <Part p={[0, 2.06, 0.21]} s={[0.2, 0.03, 0.01]} c="#d8312a" />
+        </Person>
+        <mesh position={[0, 1, 0]} onClick={talk}>
+          <boxGeometry args={[1.4, 2.4, 1.4]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+        <Html position={[0, 2.45, 0]} zIndexRange={[18, 8]}>
+          <button className="mc-talkbtn" onClick={talk} aria-label={name}>
+            💬 <span className="ml-1">{name}</span>
+          </button>
+        </Html>
+      </group>
+    </>
+  )
+}

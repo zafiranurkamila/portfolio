@@ -6,7 +6,7 @@ import { generateWorld } from './world'
 import { Blocks, Plants } from './Blocks'
 import { Player, Villagers } from './People'
 import { repeatTexture, CUTAWAY, WIND } from './textures'
-import { Animals, Boats, WindStreaks, Warung } from './Life'
+import { Animals, Boats, WindStreaks, Warung, Clinic } from './Life'
 import { Person } from './Person'
 import { rng } from './noise'
 import { describe, timeAgo } from './github'
@@ -755,7 +755,7 @@ function TargetMarker({ marker, world }) {
 export default function Scene({
   labels, hovered, setHovered, onSelect, command, bubble, onEnter, onNearDoor, onManualMove,
   onGroundClick, onAvatarClick, panelOpen, panelShift, marker, introActive, focusId, onPaper,
-  repo, lang, t, sound, onTalk, onApproach, timeMode = 'pagi', wake, onWakeDone, onDialog, onOrder, onAte,
+  repo, lang, t, sound, onTalk, onApproach, timeMode = 'pagi', wake, onWakeDone, onDialog, onOrder, onAte, onNurse,
 }) {
   const world = useMemo(() => generateWorld(), [])
   const controls = useRef()
@@ -826,6 +826,20 @@ export default function Scene({
       />
       <TargetMarker marker={marker} world={world} />
       <StageBoard repo={repo} lang={lang} t={t} />
+      {world.clinic && (
+        <>
+          <Clinic c={world.clinic} name={t.clinic.nurse} consumed={consumed} Person={Person} onNurse={onNurse} />
+          <RoofSign
+            world={world}
+            x={world.clinic.x}
+            z={world.clinic.z}
+            half={world.clinic.half}
+            door={world.clinic.door}
+            outside={world.clinic.outside}
+            text={t.clinic.name}
+          />
+        </>
+      )}
       {world.home && <ZafiraHome world={world} home={world.home} label={t.homeLabel} />}
       {world.stations.filter((s) => s.desk).map((s) => (
         <Desk key={s.id} s={s} lit={focusId === s.id} onPaper={onPaper} consumed={consumed} />

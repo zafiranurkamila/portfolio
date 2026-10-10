@@ -65,6 +65,8 @@ export function generateWorld() {
   plots.push({ ...makePlot('home_zafira', -8, 16, 3, zafiraHouse, true), deco: 'home' })
   // warung mie ayam (tempat warga makan)
   plots.push({ ...makePlot('warung', 8, -15, 3, warungStall, true), deco: 'warung' })
+  // puskesmas tempat Perawat Zulfa
+  plots.push({ ...makePlot('puskesmas', 11, 21, 3, puskesmas, true), deco: 'puskesmas' })
 
   const distToSeg = (px, pz, a, b) => {
     const dx = b[0] - a[0]
@@ -141,6 +143,7 @@ export function generateWorld() {
   // ——— bangunan ———
   let home = null
   let warung = null
+  let clinic = null
   const stations = [{ id: 'home', x: 0, z: 0, height: 2, half: 2, outside: [0, 2], inside: [0, 2] }]
   for (const p of plots) {
     const place = (lx, ly, lz, t) => {
@@ -161,7 +164,14 @@ export function generateWorld() {
       }
       const rot = (-p.k * Math.PI) / 2
       if (p.deco === 'home') home = { x: p.x, z: p.z, height: h, rot, tf, door: p.door, outside: p.outside }
-      else {
+      else if (p.deco === 'puskesmas') {
+        clinic = {
+          x: p.x, z: p.z, height: h, rot, tf, half: p.half, door: p.door, outside: p.outside,
+          nurse: tf(1.7, -p.half - 1.2),
+          visitor: tf(0.2, -p.half - 2.6),
+          monitor: tf(-2, -p.half - 0.53),
+        }
+      } else {
         // kursi menghadap gerobak (+z lokal), meja di antara kursi & gerobak
         warung = {
           x: p.x, z: p.z, height: h, rot, tf,
@@ -344,6 +354,7 @@ export function generateWorld() {
     blockAt: (x, y, z) => blocks.get(key(x, y, z)),
     home,
     warung,
+    clinic,
   }
 }
 
@@ -714,4 +725,33 @@ function zafiraHouse(place, h) {
 function warungStall() {
   // gerobak, meja, dan bangku dibuat sebagai model 3D di Life.jsx (tanpa atap)
   return 3
+}
+
+// =====================================================================
+//  Puskesmas — dinding putih, atap hijau, palang merah di atas pintu
+// =====================================================================
+function puskesmas(place, h) {
+  floor(place, h, 'stonebrick')
+  walls(place, h, 1, 3, (x, y, z) => {
+    if (y === 1) return 'stonebrick'
+    if (y === 2 && Math.abs(x) === h && Math.abs(z) === 1) return 'glass'
+    if (y === 2 && Math.abs(z) === h && Math.abs(x) === 2) return 'glass'
+    return 'wool_white'
+  })
+  door(place, h)
+  place(-1, 3, -h, 'wool_white') // lampu pintu diganti dinding (ada monitor EKG)
+  for (let x = -h - 1; x <= h + 1; x++) for (let z = -h - 1; z <= h + 1; z++) place(x, 4, z, 'wool_green')
+  // dinding depan menjulang dengan palang merah
+  for (let x = -2; x <= 2; x++) for (let y = 5; y <= 7; y++) place(x, y, -h, 'wool_white')
+  place(0, 5, -h, 'wool_red')
+  place(0, 6, -h, 'wool_red')
+  place(0, 7, -h, 'wool_red')
+  place(-1, 6, -h, 'wool_red')
+  place(1, 6, -h, 'wool_red')
+  // isi: rak obat & kasur periksa
+  place(h - 1, 1, h - 1, 'bookshelf')
+  place(-h + 1, 1, h - 1, 'wool_white')
+  place(-h + 1, 1, h - 2, 'wool_white')
+  place(0, 3, 0, 'glow')
+  return 8
 }

@@ -224,6 +224,7 @@ function buildAll() {
       px(15, i, '#4f9a3a')
     }
   })
+  make('wool_green', 35, ({ px, pick }) => fill(px, pick, ['#3f8f4a', '#3a8544', '#46995a']))
   make('wool_pink', 34, ({ px, pick }) => fill(px, pick, ['#f08cb4', '#e57fa8', '#f59ac0']))
   make('wool_black', 29, ({ px, pick }) => fill(px, pick, ['#1d1d21', '#25252a', '#18181c']))
 
@@ -274,7 +275,7 @@ const FACES = {
 export const BLOCK_TYPES = [
   'grass', 'dirt', 'path', 'stone', 'cobble', 'stonebrick', 'planks', 'log', 'leaves', 'glass',
   'water', 'sand', 'brick', 'bookshelf', 'crafting', 'furnace', 'glow', 'wool_red', 'wool_white', 'wool_blue', 'farmland',
-  'ore_coal', 'ore_gold', 'ore_diamond', 'slime', 'wool_black', 'wool_pink',
+  'ore_coal', 'ore_gold', 'ore_diamond', 'slime', 'wool_black', 'wool_pink', 'wool_green',
 ]
 
 // Blok yang tidak menutupi tetangganya (tembus pandang)
