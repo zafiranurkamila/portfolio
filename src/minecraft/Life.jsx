@@ -669,7 +669,7 @@ export function RowBoat({ dock, onBoard, consumed, label }) {
     g.position.set(ROWBOAT.x, 0.28 + Math.sin(t * 1.6) * 0.05, ROWBOAT.z)
     g.rotation.set(Math.cos(t * 1.2) * 0.03, ROWBOAT.rot, Math.sin(t * 1.4) * 0.04)
     // dayung bergerak saat sedang dipakai
-    oars.current.forEach((o, i) => o && (o.rotation.x = ROWBOAT.riding ? Math.sin(t * 5) * 0.6 : 0.2 * (i ? 1 : -1)))
+    oars.current.forEach((o, i) => o && (o.rotation.x = ROWBOAT.riding && ROWBOAT.sailing ? Math.sin(t * 5) * 0.6 : 0.2 * (i ? 1 : -1)))
   })
   const board = (e) => {
     e.stopPropagation()

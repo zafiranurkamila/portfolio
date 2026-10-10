@@ -235,6 +235,8 @@ export default function MinecraftWorld() {
   const [ready, setReady] = useState(false)
   const [phase, setPhase] = useState('loading') // loading → intro → play
   const [dialog, setDialog] = useState(null) // kotak dialog bawah (adegan)
+  const [ride, setRide] = useState({ riding: false, nearDock: false }) // status naik perahu
+  const [online, setOnline] = useState(0) // jumlah pengunjung yang sedang online
   // mode waktu awal mengikuti jam pengunjung
   const [timeMode, setTimeMode] = useState(() => {
     const h = new Date().getHours()
@@ -508,6 +510,9 @@ export default function MinecraftWorld() {
               setCommand({ type: 'boat', n: Math.random() })
             }}
             onRideDone={() => completeQuest('boat')}
+            onRideState={setRide}
+            multiplayer={playing}
+            onOnline={setOnline}
             onPhotographer={(to, face) => {
               // Zafira berdiri di depan kamera, Zahra menyapa, lalu jepret!
               clearTimeout(panelTimer.current)
@@ -547,6 +552,11 @@ export default function MinecraftWorld() {
       {/* logo + splash */}
       <header className={`pointer-events-none fixed left-3 top-3 z-20 transition-opacity duration-500 md:left-5 md:top-4 ${playing ? '' : 'opacity-0'}`}>
         <h1 className="mc-logo">{profile.name.toUpperCase()}</h1>
+        {playing && online > 0 && (
+          <div className="mc-online mt-2">
+            <span className="mc-online-dot" /> {online} {t.mp.online}
+          </div>
+        )}
       </header>
 
       {/* tombol kanan atas */}
@@ -577,7 +587,21 @@ export default function MinecraftWorld() {
         </div>
       )}
 
-      {playing && !panelOpen && !nearDoor && !focusId && !dialog && (
+      {/* sedang naik perahu: petunjuk kemudi + tombol turun di dermaga */}
+      {playing && ride.riding && !dialog && (
+        <div className="fixed inset-x-0 bottom-[104px] z-40 flex flex-col items-center gap-2 px-3">
+          {ride.nearDock && (
+            <button className="mc-btn mc-pop !px-5 !text-[18px]" onClick={() => setCommand({ type: 'unboard', n: Math.random() })}>
+              {t.ride.unboard}
+            </button>
+          )}
+          <div className="pointer-events-none text-center text-[15px] text-white [text-shadow:2px_2px_0_#3f3f3f]">
+            {isTouch ? t.ride.hintTouch : t.ride.hint}
+          </div>
+        </div>
+      )}
+
+      {playing && !panelOpen && !nearDoor && !focusId && !dialog && !ride.riding && (
         <div className="pointer-events-none fixed inset-x-0 bottom-[112px] z-10 px-4 text-center text-[15px] text-white [text-shadow:2px_2px_0_#3f3f3f]">
           {isTouch ? t.hintTouch : t.hint}
         </div>

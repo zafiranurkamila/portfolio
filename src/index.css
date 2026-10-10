@@ -650,3 +650,29 @@ main[data-panel='1'] .mc-talkbtn {
   box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.7);
   transform: rotate(-1.5deg);
 }
+
+/* ——— pengunjung lain (realtime) ——— */
+.mc-peer {
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+  padding: 2px 7px;
+  font-size: 13px;
+  color: #fff;
+  background: rgba(30, 60, 120, 0.65);
+  border: 2px solid rgba(160, 200, 255, 0.7);
+}
+.mc-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+}
+.mc-online-dot {
+  width: 8px;
+  height: 8px;
+  background: #80ff20;
+  box-shadow: 0 0 6px #80ff20;
+}

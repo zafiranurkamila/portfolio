@@ -8,6 +8,7 @@ import { Player, Villagers } from './People'
 import { repeatTexture, CUTAWAY, WIND } from './textures'
 import { Animals, Boats, WindStreaks, Warung, Clinic, Studio, RowBoat, Fisherman, Farmer } from './Life'
 import { Person } from './Person'
+import { useMultiplayer, Peers } from './Multiplayer'
 import { rng } from './noise'
 import { describe, timeAgo } from './github'
 
@@ -420,6 +421,12 @@ function PhotoCapture({ captureRef, studio, playerRef }) {
   return <pointLight ref={flashLight} intensity={0} distance={14} decay={1.4} color="#ffffff" />
 }
 
+// pengunjung lain (realtime) — hanya aktif setelah perkenalan selesai
+function MultiplayerLayer({ enabled, playerRef, t, onCount }) {
+  const { peers, ids } = useMultiplayer({ enabled, playerRef, animals: t.mp.animals, onCount })
+  return <Peers peers={peers} ids={ids} animals={t.mp.animals} label={t.mp.visitor} />
+}
+
 // jam bersama untuk efek angin (rumput, bunga, daun)
 function WindClock() {
   useFrame(({ clock }) => {
@@ -792,7 +799,7 @@ function TargetMarker({ marker, world }) {
 export default function Scene({
   labels, hovered, setHovered, onSelect, command, bubble, onEnter, onNearDoor, onManualMove,
   onGroundClick, onAvatarClick, panelOpen, panelShift, marker, introActive, focusId, onPaper,
-  repo, lang, t, sound, onTalk, onApproach, timeMode = 'pagi', wake, onWakeDone, onDialog, onOrder, onAte, onNurse, onPhotographer, captureRef, onBoard, onRideDone,
+  repo, lang, t, sound, onTalk, onApproach, timeMode = 'pagi', wake, onWakeDone, onDialog, onOrder, onAte, onNurse, onPhotographer, captureRef, onBoard, onRideDone, onRideState, multiplayer, onOnline,
 }) {
   const world = useMemo(() => generateWorld(), [])
   const controls = useRef()
@@ -857,6 +864,7 @@ export default function Scene({
         eatTexts={t.warung}
         rideTexts={t.ride}
         onRideDone={onRideDone}
+        onRideState={onRideState}
         onAte={onAte}
         onClick={() => {
           consumed.current = performance.now()
@@ -902,6 +910,7 @@ export default function Scene({
         </>
       )}
       <Farmer farm={world.farm} t={t} consumed={consumed} Person={Person} />
+      <MultiplayerLayer enabled={multiplayer} playerRef={playerRef} t={t} onCount={onOnline} />
       <PhotoCapture captureRef={captureRef} studio={world.studio} playerRef={playerRef} />
       {world.home && <ZafiraHome world={world} home={world.home} label={t.homeLabel} />}
       {world.stations.filter((s) => s.desk).map((s) => (

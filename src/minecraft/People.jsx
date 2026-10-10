@@ -69,7 +69,7 @@ const KEYS = {
 }
 
 // Zafira = karakter yang kamu kendalikan
-export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor, onManualMove, onClick, wake, onWakeDone, wakeText, exploreText, onDialog, eatTexts, onAte, rideTexts, onRideDone }) {
+export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor, onManualMove, onClick, wake, onWakeDone, wakeText, exploreText, onDialog, eatTexts, onAte, rideTexts, onRideDone, onRideState }) {
   const [eatingUI, setEatingUI] = useState(false)
   const eatFill = useRef()
   const group = playerRef
@@ -204,7 +204,27 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
   useEffect(() => {
     if (!command) return
     const g = group.current
-    if (ride.current.active) return // sedang berlayar: tunggu sampai kembali ke dermaga
+    if (ride.current.active) {
+      // sedang di perahu: klik laut = arahkan perahu ke sana; 'unboard' = turun di dermaga
+      if (command.type === 'move') ride.current.target = command.to
+      if (command.type === 'unboard') {
+        const D = world.dock
+        ride.current = { pending: false, active: false }
+        ROWBOAT.riding = false
+        ROWBOAT.sailing = false
+        ROWBOAT.x = D.boatDock[0]
+        ROWBOAT.z = D.boatDock[1]
+        ROWBOAT.rot = D.heading + Math.PI / 2
+        pose.current.legs = null
+        g.rotation.set(0, D.heading + Math.PI, 0)
+        const [bx, bz] = D.board
+        g.position.set(bx, world.ground(bx, bz) + 0.5, bz)
+        setSay(rideTexts.done)
+        setTimeout(() => setSay(null), 3000)
+        onRideState({ riding: false, nearDock: false })
+      }
+      return
+    }
     ride.current.pending = false
     // perintah baru → berhenti makan dulu (kalau sedang di warung)
     standUpFromMeal(g)
@@ -278,7 +298,7 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
     return () => clearTimeout(id)
   }, [bubble])
 
-  useFrame((_, rawDt) => {
+  useFrame(({ clock }, rawDt) => {
     const g = group.current
     const dt = Math.min(rawDt, 0.05)
     if (wake && world.home) {
@@ -286,47 +306,81 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
       return
     }
 
-    // ——— naik perahu: duduk di perahu yang berlayar keliling pulau ———
+    // ——— naik perahu: Zafira duduk di perahu & kamu yang mengemudikan ———
     const R = ride.current
     if (R.active) {
-      const pts = world.dock.ride
-      const [tx, tz] = pts[R.i]
-      const dx = tx - ROWBOAT.x
-      const dz = tz - ROWBOAT.z
-      const d = Math.hypot(dx, dz)
-      if (d < 0.3) {
-        R.i += 1
-        if (R.i >= pts.length) {
-          // selesai: turun kembali ke dermaga
-          R.active = false
-          ROWBOAT.riding = false
-          ROWBOAT.x = world.dock.boatDock[0]
-          ROWBOAT.z = world.dock.boatDock[1]
-          ROWBOAT.rot = world.dock.heading + Math.PI / 2
-          pose.current.legs = null
-          const [bx, bz] = world.dock.board
-          g.position.set(bx, world.ground(bx, bz) + 0.5, bz)
-          setSay(rideTexts.done)
-          setTimeout(() => setSay(null), 3000)
-          onRideDone()
+      // perahu hanya boleh di air (laut sekitar pulau), tidak boleh naik ke darat
+      const canSail = (x, z) => Math.hypot(x, z) < 82 && (Math.abs(x) > 60 || Math.abs(z) > 60 || world.isWater(x, z))
+      let mx = 0
+      let mz = 0
+      let ix = 0
+      let iz = 0
+      for (const k of pressed.current) {
+        ix += KEYS[k][0]
+        iz += KEYS[k][1]
+      }
+      if (ix || iz) {
+        R.target = null
+        camera.getWorldDirection(fwd)
+        fwd.y = 0
+        fwd.normalize()
+        mx = fwd.x * iz - fwd.z * ix
+        mz = fwd.z * iz + fwd.x * ix
+      } else if (R.target) {
+        mx = R.target[0] - ROWBOAT.x
+        mz = R.target[1] - ROWBOAT.z
+        if (Math.hypot(mx, mz) < 0.6) {
+          R.target = null
+          mx = 0
+          mz = 0
         }
-      } else {
-        const step = Math.min(d, 6 * dt)
-        ROWBOAT.x += (dx / d) * step
-        ROWBOAT.z += (dz / d) * step
-        let diff = Math.atan2(dx, dz) - ROWBOAT.rot
+      }
+      const len = Math.hypot(mx, mz)
+      let sailing = false
+      if (len > 0.001) {
+        mx /= len
+        mz /= len
+        const step = 6 * dt
+        const nx = ROWBOAT.x + mx * step
+        const nz = ROWBOAT.z + mz * step
+        // cek ujung depan perahu juga supaya tidak menabrak pantai
+        if (canSail(nx, nz) && canSail(nx + mx * 1.3, nz + mz * 1.3)) {
+          // hitung putaran mengelilingi pulau (untuk quest)
+          const a0 = Math.atan2(ROWBOAT.z, ROWBOAT.x)
+          const a1 = Math.atan2(nz, nx)
+          let da = a1 - a0
+          da = Math.atan2(Math.sin(da), Math.cos(da))
+          R.turn += da
+          ROWBOAT.x = nx
+          ROWBOAT.z = nz
+          sailing = true
+          if (!R.lapDone && Math.abs(R.turn) > Math.PI * 2 * 0.97) {
+            R.lapDone = true
+            setSay(rideTexts.lap)
+            setTimeout(() => setSay(null), 3000)
+            onRideDone()
+          }
+        } else R.target = null
+        let diff = Math.atan2(mx, mz) - ROWBOAT.rot
         diff = Math.atan2(Math.sin(diff), Math.cos(diff))
-        ROWBOAT.rot += diff * Math.min(1, dt * 3)
+        ROWBOAT.rot += diff * Math.min(1, dt * 5)
       }
-      if (R.active) {
-        g.position.set(ROWBOAT.x, 0.38, ROWBOAT.z)
-        g.rotation.y = ROWBOAT.rot
-        pose.current.legs = -Math.PI / 2
-        pose.current.swim = false
-        moving.current = false
-        if (ripple.current) ripple.current.visible = false
-        return
+      ROWBOAT.sailing = sailing
+      // Zafira ikut terayun bersama perahu (rumus sama dengan RowBoat)
+      const tt = clock.elapsedTime
+      g.position.set(ROWBOAT.x, 0.28 + Math.sin(tt * 1.6) * 0.05 + 0.12, ROWBOAT.z)
+      g.rotation.set(Math.cos(tt * 1.2) * 0.03, ROWBOAT.rot, Math.sin(tt * 1.4) * 0.04)
+      pose.current.legs = -Math.PI / 2
+      pose.current.swim = false
+      moving.current = false
+      if (ripple.current) ripple.current.visible = false
+      // dekat dermaga → boleh turun
+      const near = Math.hypot(ROWBOAT.x - world.dock.boatDock[0], ROWBOAT.z - world.dock.boatDock[1]) < 5
+      if (near !== R.near) {
+        R.near = near
+        onRideState({ riding: true, nearDock: near })
       }
+      return
     }
 
     // ——— makan mie ayam di warung ———
@@ -398,10 +452,11 @@ export function Player({ world, command, bubble, playerRef, onEnter, onNearDoor,
     } else {
       moving.current = stepAlong(g, queue.current, speed.current, dt)
       if (!moving.current && ride.current.pending) {
-        ride.current = { pending: false, active: true, i: 1 }
+        ride.current = { pending: false, active: true, turn: 0, lapDone: false, near: true, target: null }
         ROWBOAT.riding = true
         setSay(rideTexts.start)
-        setTimeout(() => setSay(null), 2500)
+        setTimeout(() => setSay(null), 3500)
+        onRideState({ riding: true, nearDock: true })
       }
       if (!moving.current && meal.current.pending) {
         meal.current.pending = false

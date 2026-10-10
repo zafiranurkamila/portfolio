@@ -256,10 +256,19 @@ export const UI = {
     off: 'Mati',
     close: 'Tutup',
     start: 'Mulai',
+    mp: {
+      visitor: 'Pengunjung',
+      online: 'orang sedang menjelajah',
+      animals: ['Kucing', 'Panda', 'Kelinci', 'Rubah', 'Koala', 'Penyu', 'Lumba-lumba', 'Burung Hantu', 'Rusa', 'Pinguin'],
+    },
     ride: {
       label: 'Naik perahu',
-      start: 'Yuk, keliling pulau!',
-      done: 'Seru banget keliling pulau!',
+      start: 'Ayo kemudikan perahunya keliling pulau!',
+      done: 'Seru banget naik perahu!',
+      lap: 'Yeay, sudah satu putaran keliling pulau!',
+      unboard: 'Turun dari perahu',
+      hint: 'WASD/panah atau klik laut untuk mengemudikan perahu · kembali ke dermaga untuk turun',
+      hintTouch: 'Ketuk laut untuk mengemudikan perahu · kembali ke dermaga untuk turun',
     },
     fisher: {
       name: 'Pak Pemancing',
@@ -410,10 +419,19 @@ export const UI = {
     off: 'Off',
     close: 'Close',
     start: 'Start',
+    mp: {
+      visitor: 'Visitor',
+      online: 'exploring right now',
+      animals: ['Cat', 'Panda', 'Rabbit', 'Fox', 'Koala', 'Turtle', 'Dolphin', 'Owl', 'Deer', 'Penguin'],
+    },
     ride: {
       label: 'Take the boat',
-      start: "Let's sail around the island!",
+      start: "Let's steer the boat around the island!",
       done: 'That boat ride was so fun!',
+      lap: "Yay, I sailed all the way around the island!",
+      unboard: 'Get off the boat',
+      hint: 'WASD/arrows or click the sea to steer · come back to the pier to get off',
+      hintTouch: 'Tap the sea to steer · come back to the pier to get off',
     },
     fisher: {
       name: 'The Fisherman',
