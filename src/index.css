@@ -8,12 +8,16 @@
 
 @layer base {
   body {
-    @apply bg-[#78a7ff] font-mc text-ink antialiased;
+    @apply bg-[#3b2a1d] font-mc text-ink antialiased;
     overflow: hidden;
   }
 }
 
+html {
+  background: #3b2a1d;
+}
 .mc-sky {
+  min-height: 100lvh;
   background: linear-gradient(#5f93f5 0%, #8ab6ff 45%, #c9ddff 100%);
 }
 
@@ -256,6 +260,7 @@
 }
 
 .mc-loading {
+  min-height: 100lvh;
   background-size: 64px;
   image-rendering: pixelated;
   box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, 0.55);

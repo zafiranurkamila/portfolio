@@ -67,7 +67,11 @@ function Loading({ t, done, hidden, onStart }) {
           <div className="h-2 w-64 border border-black bg-[#4a4a4a]">
             <div className="h-full bg-[#80ff20] transition-[width]" style={{ width: `${p}%` }} />
           </div>
-          <div className="text-[16px] text-[#c6c6c6]">{t.loadingSub}</div>
+          <div className="px-6 text-center text-[16px] leading-snug text-[#c6c6c6]">
+            {t.loadingSub.split(' · ').map((line) => (
+              <div key={line}>{line}</div>
+            ))}
+          </div>
         </>
       )}
     </div>
