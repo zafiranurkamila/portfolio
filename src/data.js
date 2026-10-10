@@ -256,6 +256,16 @@ export const UI = {
     off: 'Mati',
     close: 'Tutup',
     start: 'Mulai',
+    warung: {
+      name: 'Warung Mie Ayam',
+      seller: 'Pak Mie',
+      eatLine: 'Kenyang! Enak banget mie ayamnya.',
+      lines: [
+        'Mie ayam, Kak? Hangat, baru matang!',
+        'Pakai bakso juga enak, lho.',
+        'Warga sini langganan semua. Silakan duduk!',
+      ],
+    },
     music: 'Musik',
     // sapaan saat bangun, mengikuti mode waktu (jam pengunjung)
     wakeText: {
@@ -355,6 +365,16 @@ export const UI = {
     off: 'Off',
     close: 'Close',
     start: 'Start',
+    warung: {
+      name: 'Chicken Noodle Stall',
+      seller: 'Mr. Noodle',
+      eatLine: "I'm full! That chicken noodle was so good.",
+      lines: [
+        'Chicken noodles? Warm and freshly made!',
+        'Try it with meatballs, too.',
+        'Everyone here is a regular. Have a seat!',
+      ],
+    },
     music: 'Music',
     wakeText: {
       pagi: "Yawn... good morning! Let's go!",

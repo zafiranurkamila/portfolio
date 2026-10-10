@@ -329,7 +329,10 @@ const VILLAGERS = [
   { skin: '#a8724f', hair: '#1b1410', shirt: '#e9ecec', pants: '#3c4fa0', longHair: true },
 ]
 
-function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, onTalk, onApproach }) {
+// kursi warung yang sedang dipakai (indeks kursi → id warga), dibaca juga oleh mangkuk di meja
+export const WARUNG_SEATS = [null, null, null]
+
+function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, onTalk, onApproach, eatLine }) {
   const group = useRef()
   const moving = useRef(false)
   const queue = useRef([])
@@ -346,6 +349,8 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
   }
   const r = useMemo(() => rng(seed * 97 + 13), [seed])
   const start = world.pois[(seed * 3) % world.pois.length]
+  const pose = useRef({ legs: null })
+  const meal = useRef({ seat: -1, eating: 0 }) // seat ≥ 0 = sedang menuju/duduk di warung
   const { gl } = useThree()
 
   const startTalk = () => {
@@ -361,6 +366,19 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
   const talk = (e) => {
     e?.stopPropagation?.()
     consumed.current = performance.now()
+    // sedang makan → cukup ngobrol dari kursi
+    if (meal.current.eating > 0) {
+      setSay(lines[lineIdx.current % lines.length])
+      lineIdx.current += 1
+      if (sound) typeSound()
+      onTalk()
+      setTimeout(() => setSay(null), 4000)
+      return
+    }
+    if (meal.current.seat >= 0) {
+      WARUNG_SEATS[meal.current.seat] = null
+      meal.current.seat = -1
+    }
     queue.current = []
     moving.current = false
     const g = group.current
@@ -381,6 +399,27 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
     const g = group.current
     const dt = Math.min(rawDt, 0.05)
     const p = playerRef.current
+    const W = world.warung
+    // ——— makan di warung: duduk di bangku menghadap meja ———
+    if (meal.current.eating > 0) {
+      meal.current.eating -= dt
+      const [sx, sz] = W.seats[meal.current.seat]
+      g.position.set(sx, world.ground(sx, sz) + 0.5 - 0.22, sz)
+      g.rotation.y = W.rot
+      pose.current.legs = -Math.PI / 2
+      moving.current = false
+      if (meal.current.eating <= 0) {
+        // selesai makan → berdiri lagi
+        WARUNG_SEATS[meal.current.seat] = null
+        meal.current.seat = -1
+        pose.current.legs = null
+        g.position.y = world.ground(sx, sz) + 0.5
+        setSay(eatLine)
+        setTimeout(() => setSay(null), 3000)
+        wait.current = 2
+      }
+      return
+    }
     if (waiting.current > 0) {
       waiting.current -= dt
       moving.current = false
@@ -406,11 +445,24 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
       if (p) turnTo(g, Math.atan2(p.position.x - g.position.x, p.position.z - g.position.z), dt * 4)
     } else if (queue.current.length) {
       moving.current = stepAlong(g, queue.current, 1.8, dt)
+      // sampai di kursi warung → duduk makan
+      if (!queue.current.length && meal.current.seat >= 0) meal.current.eating = 9 + r() * 6
     } else {
       moving.current = false
       wait.current -= dt
       if (wait.current <= 0) {
         wait.current = 2 + r() * 5
+        // kadang lapar → ke warung mie ayam kalau ada kursi kosong
+        const free = W ? WARUNG_SEATS.findIndex((x) => x === null) : -1
+        if (free >= 0 && r() < 0.3) {
+          const path = world.findPath([g.position.x, g.position.z], W.seats[free])
+          if (path) {
+            WARUNG_SEATS[free] = seed
+            meal.current.seat = free
+            queue.current = [...path, W.seats[free]]
+            return
+          }
+        }
         const t = world.pois[Math.floor(r() * world.pois.length)]
         const path = world.findPath([g.position.x, g.position.z], [t[0] + (r() - 0.5) * 2, t[1] + (r() - 0.5) * 2])
         if (path) queue.current = path
@@ -424,6 +476,7 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
       <Person
         look={look}
         moving={moving}
+        pose={pose}
         onClick={talk}
       />
       {/* kotak klik yang lebih besar dari badan supaya gampang diketuk di HP */}
@@ -466,7 +519,7 @@ function Villager({ world, look, seed, playerRef, lines, name, consumed, sound, 
   )
 }
 
-export function Villagers({ world, playerRef, consumed, villagers, sound, onTalk, onApproach }) {
+export function Villagers({ world, playerRef, consumed, villagers, sound, onTalk, onApproach, eatLine }) {
   return VILLAGERS.map((look, i) => (
     <Villager
       key={i}
@@ -480,6 +533,7 @@ export function Villagers({ world, playerRef, consumed, villagers, sound, onTalk
       sound={sound}
       onTalk={onTalk}
       onApproach={onApproach}
+      eatLine={eatLine}
     />
   ))
 }

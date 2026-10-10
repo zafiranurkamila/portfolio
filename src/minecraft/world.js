@@ -62,7 +62,9 @@ export function generateWorld() {
   // 3 mini game di pojok desa
   for (const [id, x, z, half, build] of GAMES) plots.push(makePlot(id, x, z, half, build, true))
   // rumah Zafira (tempat adegan bangun tidur)
-  plots.push({ ...makePlot('home_zafira', -8, 16, 3, zafiraHouse, true), deco: true })
+  plots.push({ ...makePlot('home_zafira', -8, 16, 3, zafiraHouse, true), deco: 'home' })
+  // warung mie ayam (tempat warga makan)
+  plots.push({ ...makePlot('warung', 8, -15, 3, warungStall, true), deco: 'warung' })
 
   const distToSeg = (px, pz, a, b) => {
     const dx = b[0] - a[0]
@@ -138,6 +140,7 @@ export function generateWorld() {
 
   // ——— bangunan ———
   let home = null
+  let warung = null
   const stations = [{ id: 'home', x: 0, z: 0, height: 2, half: 2, outside: [0, 2], inside: [0, 2] }]
   for (const p of plots) {
     const place = (lx, ly, lz, t) => {
@@ -156,9 +159,17 @@ export function generateWorld() {
         for (let i = 0; i < p.k; i++) [x, z] = [-z, x]
         return [p.x + x, p.z + z]
       }
-      home = {
-        x: p.x, z: p.z, height: h, rot: (-p.k * Math.PI) / 2, tf,
-        door: p.door, outside: p.outside,
+      const rot = (-p.k * Math.PI) / 2
+      if (p.deco === 'home') home = { x: p.x, z: p.z, height: h, rot, tf, door: p.door, outside: p.outside }
+      else {
+        // kursi menghadap gerobak (+z lokal), meja di antara kursi & gerobak
+        warung = {
+          x: p.x, z: p.z, height: h, rot, tf,
+          seats: [tf(-1, -2), tf(0, -2), tf(1, -2)],
+          table: tf(0, -1),
+          seller: tf(0, 2),
+          front: tf(0, -5),
+        }
       }
       continue
     }
@@ -180,18 +191,22 @@ export function generateWorld() {
 
   // ——— lampu jalan ———
   const lamps = []
-  for (const p of plots) {
-    const len = Math.hypot(p.approach[0], p.approach[1])
-    const nx = -p.approach[1] / len
-    const nz = p.approach[0] / len
-    for (const t of [0.45, 0.9]) {
-      const lx = Math.round(p.approach[0] * t + nx * 2.2)
-      const lz = Math.round(p.approach[1] * t + nz * 2.2)
-      if (roadDist(lx, lz) < 1.3 || plotDist(lx, lz) < 1) continue
+  // 1 lampu per jalan ke 6 bangunan utama, selang-seling kiri/kanan, tidak terlalu dekat satu sama lain
+  plots
+    .filter((p) => !p.game)
+    .forEach((p, i) => {
+      const len = Math.hypot(p.approach[0], p.approach[1])
+      const side = i % 2 ? 1 : -1
+      const nx = (-p.approach[1] / len) * side
+      const nz = (p.approach[0] / len) * side
+      const lx = Math.round(p.approach[0] * 0.7 + nx * 2.2)
+      const lz = Math.round(p.approach[1] * 0.7 + nz * 2.2)
+      if (roadDist(lx, lz) < 1.3 || plotDist(lx, lz) < 1) return
+      if (lamps.some(([x, z]) => Math.hypot(x - lx, z - lz) < 7)) return
       lamps.push([lx, lz])
-    }
-  }
-  for (const [x, z] of [[4, 4], [-4, 4], [5, -4], [-5, -4]]) lamps.push([x, z])
+    })
+  // alun-alun: cukup 2 lampu di depan
+  for (const [x, z] of [[4, 4], [-4, 4]]) lamps.push([x, z])
   for (const [x, z] of lamps) {
     set(x, 1, z, 'log')
     set(x, 2, z, 'log')
@@ -265,6 +280,10 @@ export function generateWorld() {
     }
   }
   for (const p of plots) if (p.desk) walk[idx(p.desk[0], p.desk[1])] = 0 // meja menghalangi
+  if (warung) for (const lx of [-1, 0, 1]) {
+    const [x, z] = warung.tf(lx, -1)
+    walk[idx(x, z)] = 0 // meja warung
+  }
 
   // ——— buang blok yang tertutup penuh (hemat GPU) ———
   const solid = (x, y, z) => {
@@ -299,6 +318,7 @@ export function generateWorld() {
   }
   for (const p of plots) pois.push(p.approach)
   pois.push([POND.x - 5, POND.z], [FARM.x + 5, FARM.z])
+  if (warung) pois.push(warung.front)
 
   return {
     byType, plants, stations, pois,
@@ -306,6 +326,7 @@ export function generateWorld() {
     findPath: (from, to) => findPath(walk, height, from, to),
     blockAt: (x, y, z) => blocks.get(key(x, y, z)),
     home,
+    warung,
   }
 }
 
@@ -666,4 +687,26 @@ function zafiraHouse(place, h) {
   place(h - 1, 1, h - 2, 'crafting')
   place(1, 3, h - 1, 'glow')
   return h + 6
+}
+
+// =====================================================================
+//  Warung mie ayam — tenda terpal biru, gerobak berkaca, kompor
+// =====================================================================
+function warungStall(place, h) {
+  floor(place, h - 1, 'cobble')
+  for (const x of [-h, h]) for (const z of [-h, h]) for (let y = 1; y <= 3; y++) place(x, y, z, 'log')
+  for (let x = -h - 1; x <= h + 1; x++) for (let z = -h - 1; z <= h + 1; z++) place(x, 4, z, 'wool_blue')
+  for (let x = -h + 1; x <= h - 1; x++) for (let z = -1; z <= 1; z++) place(x, 5, z, 'wool_white')
+  // gerobak mie: badan kayu + etalase kaca
+  for (let x = -1; x <= 1; x++) {
+    place(x, 1, 1, 'planks')
+    place(x, 2, 1, 'glass')
+  }
+  place(0, 3, 1, 'wool_red') // papan nama gerobak
+  // kompor & panci di belakang
+  place(-2, 1, 2, 'furnace')
+  place(2, 1, 2, 'crafting')
+  place(2, 3, -h, 'glow')
+  place(-2, 3, -h, 'glow')
+  return 6
 }

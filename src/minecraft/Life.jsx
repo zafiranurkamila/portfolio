@@ -4,6 +4,7 @@ import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { rng } from './noise'
 import { typeSound } from '../sound'
+import { WARUNG_SEATS } from './People'
 
 // =====================================================================
 //  Kehidupan di dunia: hewan, kapal di laut, dan garis angin
@@ -209,7 +210,11 @@ export function Animals({ world, lang, consumed }) {
 }
 
 // ——— kapal kayu berlayar mengelilingi pulau ———
-function Boat({ radius, speed, phase, sail }) {
+const SAILOR = { skin: '#c98f6b', hair: '#2e1f17', shirt: '#2b4f8c', pants: '#f2ead3', sleeve: '#f2f2f2' }
+const SAILOR2 = { skin: '#e7b48f', hair: '#7a3b1e', shirt: '#f2f2f2', pants: '#2b4f8c', longHair: true }
+
+function Boat({ radius, speed, phase, sail, Person }) {
+  const still = useRef(false)
   const ref = useRef()
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
@@ -231,16 +236,29 @@ function Boat({ radius, speed, phase, sail }) {
       <Part p={[0, 2.1, 0.2]} s={[0.14, 3.6, 0.14]} c="#5a3a20" />
       <Part p={[0, 2.3, 0.35]} s={[1.9, 2.2, 0.06]} c={sail} />
       <Part p={[0.35, 4.05, 0.2]} s={[0.6, 0.3, 0.04]} c="#d8312a" />
+      {/* awak kapal: juru mudi di buritan + satu di haluan */}
+      <Part p={[0, 0.85, -1.35]} s={[0.12, 0.6, 0.12]} c="#5a3a20" />
+      <Part p={[0, 1.2, -1.32]} s={[0.6, 0.6, 0.06]} c="#8a5a30" />
+      {Person && (
+        <>
+          <group position={[0, 0.4, -1.75]} scale={0.8}>
+            <Person look={SAILOR} moving={still} />
+          </group>
+          <group position={[0.25, 0.4, 1.3]} rotation-y={0.6} scale={0.8}>
+            <Person look={SAILOR2} moving={still} />
+          </group>
+        </>
+      )}
     </group>
   )
 }
 
-export function Boats() {
+export function Boats({ Person }) {
   return (
     <>
-      <Boat radius={58} speed={0.035} phase={0} sail="#f2ead3" />
-      <Boat radius={64} speed={-0.025} phase={2.4} sail="#f2ead3" />
-      <Boat radius={61} speed={0.03} phase={4.2} sail="#f08cb4" />
+      <Boat radius={58} speed={0.035} phase={0} sail="#f2ead3" Person={Person} />
+      <Boat radius={64} speed={-0.025} phase={2.4} sail="#f2ead3" Person={Person} />
+      <Boat radius={61} speed={0.03} phase={4.2} sail="#f08cb4" Person={Person} />
     </>
   )
 }
@@ -285,4 +303,115 @@ export function WindStreaks({ center }) {
       <planeGeometry args={[1, 0.05]} />
     </mesh>
   ))
+}
+
+// ——— Warung mie ayam: meja, bangku, mangkuk berasap, dan penjual ———
+function Bowl({ seatIdx, pos, rot }) {
+  const ref = useRef()
+  const steam = useRef([])
+  useFrame(({ clock }) => {
+    const busy = WARUNG_SEATS[seatIdx] !== null
+    if (ref.current) ref.current.visible = busy
+    const t = clock.elapsedTime
+    steam.current.forEach((s, i) => {
+      if (!s) return
+      const k = (t * 0.6 + i / 3) % 1
+      s.position.y = 0.15 + k * 0.6
+      s.position.x = Math.sin(t * 2 + i) * 0.05
+      s.material.opacity = (1 - k) * 0.5
+    })
+  })
+  return (
+    <group ref={ref} position={pos} rotation-y={rot} visible={false}>
+      <Part p={[0, 0.06, 0]} s={[0.3, 0.12, 0.3]} c="#f4f4f0" />
+      <Part p={[0, 0.125, 0]} s={[0.24, 0.02, 0.24]} c="#f0c95a" />
+      <Part p={[0.05, 0.14, 0.03]} s={[0.1, 0.03, 0.08]} c="#8a5a30" />
+      <Part p={[-0.06, 0.14, -0.05]} s={[0.06, 0.02, 0.06]} c="#4f9a3a" />
+      {[0, 1, 2].map((i) => (
+        <mesh key={i} ref={(el) => (steam.current[i] = el)} position={[0, 0.2, 0]}>
+          <boxGeometry args={[0.07, 0.07, 0.07]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.4} depthWrite={false} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+export function Warung({ w, t, consumed, Person, DoorSign }) {
+  const [say, setSay] = useState(null)
+  const idx = useRef(0)
+  const { gl } = useThree()
+  const [tx, tz] = w.table
+  const [sx, sz] = w.seller
+  const benchCenter = w.tf(0, -2)
+  const sellerLook = useMemo(
+    () => ({ skin: '#d9a07a', hair: '#2e1f17', shirt: '#f2f2f2', pants: '#3b3b3b', apron: '#d8312a' }),
+    [],
+  )
+  const still = useRef(false)
+
+  const talk = (e) => {
+    e.stopPropagation()
+    consumed.current = performance.now()
+    setSay(t.warung.lines[idx.current % t.warung.lines.length])
+    idx.current += 1
+    typeSound()
+    setTimeout(() => setSay(null), 4000)
+  }
+
+  return (
+    <>
+      {/* meja panjang */}
+      <group position={[tx, 0.5, tz]} rotation-y={w.rot}>
+        <Part p={[0, 0.72, 0]} s={[3, 0.1, 0.8]} c="#8a5a30" />
+        {[[-1.35, -0.3], [1.35, -0.3], [-1.35, 0.3], [1.35, 0.3]].map(([x, z], i) => (
+          <Part key={i} p={[x, 0.34, z]} s={[0.1, 0.68, 0.1]} c="#6b4423" />
+        ))}
+      </group>
+      {/* bangku */}
+      <group position={[benchCenter[0], 0.5, benchCenter[1]]} rotation-y={w.rot}>
+        <Part p={[0, 0.38, -0.05]} s={[3, 0.08, 0.4]} c="#a8834f" />
+        {[-1.3, 1.3].map((x) => (
+          <Part key={x} p={[x, 0.17, -0.05]} s={[0.1, 0.34, 0.3]} c="#7a5230" />
+        ))}
+      </group>
+      {/* mangkuk mie ayam di depan tiap kursi */}
+      {w.seats.map((_, i) => {
+        const [bx, bz] = w.tf(i - 1, -1.2)
+        return <Bowl key={i} seatIdx={i} pos={[bx, 0.5 + 0.77, bz]} rot={w.rot} />
+      })}
+      {/* penjual di balik gerobak */}
+      <group
+        position={[sx, 0.5, sz]}
+        rotation-y={w.rot + Math.PI}
+        scale={0.92}
+        onClick={talk}
+        onPointerOver={() => (gl.domElement.style.cursor = 'pointer')}
+        onPointerOut={() => (gl.domElement.style.cursor = 'grab')}
+      >
+        <Person look={sellerLook} moving={still} />
+        <mesh position={[0, 1, 0]} onClick={talk}>
+          <boxGeometry args={[1.4, 2.4, 1.4]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+        <Html position={[0, 2.4, 0]} zIndexRange={[18, 8]}>
+          {say ? (
+            <div className="mc-speech pointer-events-none">
+              <div className="mc-speech-name">{t.warung.seller}</div>
+              {say}
+            </div>
+          ) : (
+            <button className="mc-talkbtn" onClick={talk} aria-label={t.warung.seller}>
+              💬
+            </button>
+          )}
+        </Html>
+      </group>
+      {(() => {
+        // papan nama tergantung di bawah tepi depan atap
+        const [fx, fz] = w.tf(0, -3.6)
+        return <DoorSign pos={[fx, 3.3, fz]} rot={w.rot + Math.PI} text={t.warung.name} width={3.4} />
+      })()}
+    </>
+  )
 }

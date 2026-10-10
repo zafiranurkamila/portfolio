@@ -6,9 +6,88 @@ import { generateWorld } from './world'
 import { Blocks, Plants } from './Blocks'
 import { Player, Villagers } from './People'
 import { repeatTexture, CUTAWAY, WIND } from './textures'
-import { Animals, Boats, WindStreaks } from './Life'
+import { Animals, Boats, WindStreaks, Warung } from './Life'
+import { Person } from './Person'
 import { rng } from './noise'
 import { describe, timeAgo } from './github'
+
+// ——— Papan nama kayu yang menempel di atas pintu ———
+function drawSign(canvas, text) {
+  const g = canvas.getContext('2d')
+  const W = canvas.width
+  const H = canvas.height
+  g.fillStyle = '#a8834f'
+  g.fillRect(0, 0, W, H)
+  // serat kayu
+  for (let y = 0; y < H; y += 8) {
+    g.fillStyle = y % 16 ? '#9c784a' : '#b08a53'
+    g.fillRect(0, y, W, 3)
+  }
+  g.strokeStyle = '#5a3a20'
+  g.lineWidth = 8
+  g.strokeRect(4, 4, W - 8, H - 8)
+  g.fillStyle = '#3a2410'
+  g.textAlign = 'center'
+  g.textBaseline = 'middle'
+  let size = 30
+  do {
+    g.font = `${size}px "Press Start 2P"`
+    size -= 2
+  } while (g.measureText(text).width > W - 40 && size > 10)
+  g.fillText(text, W / 2, H / 2 + 2)
+}
+
+export function DoorSign({ pos, rot, text, width = 3 }) {
+  const canvas = useMemo(() => {
+    const c = document.createElement('canvas')
+    c.width = 384
+    c.height = 96
+    return c
+  }, [])
+  const tex = useMemo(() => {
+    const x = new THREE.CanvasTexture(canvas)
+    x.colorSpace = THREE.SRGBColorSpace
+    x.anisotropy = 4
+    return x
+  }, [canvas])
+  useEffect(() => {
+    let alive = true
+    drawSign(canvas, text)
+    tex.needsUpdate = true
+    document.fonts
+      .load('30px "Press Start 2P"')
+      .catch(() => {})
+      .then(() => {
+        if (!alive) return
+        drawSign(canvas, text)
+        tex.needsUpdate = true
+      })
+    return () => {
+      alive = false
+    }
+  }, [canvas, tex, text])
+  return (
+    <group position={pos} rotation-y={rot}>
+      <mesh position={[0, 0, 0.045]}>
+        <planeGeometry args={[width, width / 4]} />
+        <meshLambertMaterial map={tex} />
+      </mesh>
+      <mesh castShadow>
+        <boxGeometry args={[width + 0.08, width / 4 + 0.08, 0.08]} />
+        <meshLambertMaterial color="#5a3a20" />
+      </mesh>
+    </group>
+  )
+}
+
+// posisi papan: di dinding depan, tepat di atas pintu
+function signFor(door, outside, y) {
+  const fx = outside[0] - door[0]
+  const fz = outside[1] - door[1]
+  const l = Math.hypot(fx, fz) || 1
+  return { pos: [door[0] + (fx / l) * 0.56, y, door[1] + (fz / l) * 0.56], rot: Math.atan2(fx, fz) }
+}
+const SIGN_Y = { work: 4.05, journey: 4.1 }
 
 // ——— Bangunan yang bisa diklik: kotak tak terlihat + garis seleksi + papan nama ———
 function Station({ s, label, hovered, onHover, onSelect, consumed }) {
@@ -38,16 +117,19 @@ function Station({ s, label, hovered, onHover, onSelect, consumed }) {
           <lineBasicMaterial color="#141414" />
         </lineSegments>
       )}
-      <Html position={[0, h / 2 + 1.4, 0]} center zIndexRange={[15, 5]}>
-        <button
-          className={`mc-nametag ${hovered ? 'is-hot' : ''}`}
-          onClick={() => onSelect(s.id)}
-          onPointerEnter={() => onHover(s.id)}
-          onPointerLeave={() => onHover(null)}
-        >
-          {label}
-        </button>
-      </Html>
+      {/* hanya tempat game yang pakai label melayang; bangunan lain pakai papan di pintu */}
+      {s.game && (
+        <Html position={[0, h / 2 + 1.4, 0]} center zIndexRange={[15, 5]}>
+          <button
+            className={`mc-nametag ${hovered ? 'is-hot' : ''}`}
+            onClick={() => onSelect(s.id)}
+            onPointerEnter={() => onHover(s.id)}
+            onPointerLeave={() => onHover(null)}
+          >
+            {label}
+          </button>
+        </Html>
+      )}
     </group>
   )
 }
@@ -265,9 +347,7 @@ function ZafiraHome({ home, label }) {
           <meshLambertMaterial color="#ffffff" />
         </mesh>
       </group>
-      <Html position={[home.x, home.height + 1.6, home.z]} center zIndexRange={[15, 5]} style={{ pointerEvents: 'none' }}>
-        <div className="mc-nametag">🏠 {label}</div>
-      </Html>
+      <DoorSign {...signFor(home.door, home.outside, 3)} text={label} />
     </>
   )
 }
@@ -688,10 +768,11 @@ export default function Scene({
       <Blocks byType={world.byType} blockAt={world.blockAt} />
       <Plants plants={world.plants} />
       <WindClock />
+      {world.warung && <Warung w={world.warung} t={t} consumed={consumed} Person={Person} DoorSign={DoorSign} />}
       <Animals world={world} lang={lang} consumed={consumed} />
-      <Boats />
+      <Boats Person={Person} />
       <WindStreaks center={playerRef} />
-      <Villagers world={world} playerRef={playerRef} consumed={consumed} villagers={t.villagers} sound={sound} onTalk={onTalk} onApproach={onApproach} />
+      <Villagers world={world} playerRef={playerRef} consumed={consumed} villagers={t.villagers} sound={sound} onTalk={onTalk} onApproach={onApproach} eatLine={t.warung.eatLine} />
       <Player
         world={world}
         command={command}
@@ -716,6 +797,11 @@ export default function Scene({
       {world.stations.filter((s) => s.desk).map((s) => (
         <Desk key={s.id} s={s} lit={focusId === s.id} onPaper={onPaper} consumed={consumed} />
       ))}
+      {world.stations
+        .filter((s) => s.desk)
+        .map((s) => (
+          <DoorSign key={'sign-' + s.id} {...signFor(s.door, s.outside, SIGN_Y[s.id] || 3)} text={labels[s.id]} />
+        ))}
       {world.stations.slice(1).map((s) => (
         <Station
           key={s.id}
