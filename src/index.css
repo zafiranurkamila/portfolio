@@ -604,6 +604,8 @@ main[data-panel='1'] .mc-talkbtn {
   .mc-logo {
     display: inline-block;
     padding: 4px 6px 2px;
+    font-size: 12px;
+    line-height: 1.45;
     background: rgba(0, 0, 0, 0.35);
   }
 }

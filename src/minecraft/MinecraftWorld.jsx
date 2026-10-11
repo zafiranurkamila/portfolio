@@ -551,10 +551,14 @@ export default function MinecraftWorld() {
 
       {/* logo + splash */}
       <header className={`pointer-events-none fixed left-3 top-3 z-20 transition-opacity duration-500 md:left-5 md:top-4 ${playing ? '' : 'opacity-0'}`}>
-        <h1 className="mc-logo">{profile.name.toUpperCase()}</h1>
+        {/* HP: nama dipecah 2 baris (ZAFIRA / NUR KAMILA) supaya tidak menabrak tombol */}
+        <h1 className="mc-logo">
+          <span className="block md:inline">{profile.name.split(' ')[0].toUpperCase()}</span>{' '}
+          <span className="block md:inline">{profile.name.split(' ').slice(1).join(' ').toUpperCase()}</span>
+        </h1>
         {playing && online > 0 && (
           // HP: di bawah baris tombol & teks singkat supaya tidak menabrak tombol
-          <div className="mc-online mt-11 md:mt-2">
+          <div className="mc-online mt-2">
             <span className="mc-online-dot" /> {online} <span className="md:hidden">online</span>
             <span className="hidden md:inline">{t.mp.online}</span>
           </div>
@@ -562,7 +566,7 @@ export default function MinecraftWorld() {
       </header>
 
       {/* tombol kanan atas */}
-      <div className="fixed right-3 top-11 z-40 flex gap-2 md:right-5 md:top-4">
+      <div className="fixed right-3 top-3 z-40 flex gap-2 md:right-5 md:top-4">
         <button className="mc-btn" onClick={() => setLang(lang === 'id' ? 'en' : 'id')} aria-label="Language">
           {lang === 'id' ? 'ID' : 'EN'} ⇄
         </button>
