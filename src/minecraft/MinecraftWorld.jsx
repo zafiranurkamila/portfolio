@@ -558,7 +558,7 @@ export default function MinecraftWorld() {
         </h1>
         {playing && online > 0 && (
           // HP: di bawah baris tombol & teks singkat supaya tidak menabrak tombol
-          <div className="mc-online mt-2">
+          <div className="mc-online mt-2 !flex w-max">
             <span className="mc-online-dot" /> {online} <span className="md:hidden">online</span>
             <span className="hidden md:inline">{t.mp.online}</span>
           </div>
@@ -566,7 +566,8 @@ export default function MinecraftWorld() {
       </header>
 
       {/* tombol kanan atas */}
-      <div className="fixed right-3 top-3 z-40 flex gap-2 md:right-5 md:top-4">
+      {/* HP: tombol di baris kedua, di bawah nama (tombol EN/Morning lebih lebar) */}
+      <div className="fixed right-3 top-[54px] z-40 flex gap-2 md:right-5 md:top-4">
         <button className="mc-btn" onClick={() => setLang(lang === 'id' ? 'en' : 'id')} aria-label="Language">
           {lang === 'id' ? 'ID' : 'EN'} ⇄
         </button>
