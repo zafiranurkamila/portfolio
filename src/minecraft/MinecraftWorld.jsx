@@ -566,19 +566,19 @@ export default function MinecraftWorld() {
       </header>
 
       {/* tombol kanan atas */}
-      {/* HP: tombol di baris kedua, di bawah nama (tombol EN/Morning lebih lebar) */}
-      <div className="fixed right-3 top-[54px] z-40 flex gap-2 md:right-5 md:top-4">
-        <button className="mc-btn" onClick={() => setLang(lang === 'id' ? 'en' : 'id')} aria-label="Language">
+      {/* tombol kanan atas (di HP dibuat ramping supaya sebaris dengan nama) */}
+      <div className="fixed right-2 top-3 z-40 flex gap-1.5 md:right-5 md:top-4 md:gap-2">
+        <button className="mc-btn mc-top" onClick={() => setLang(lang === 'id' ? 'en' : 'id')} aria-label="Language">
           {lang === 'id' ? 'ID' : 'EN'} ⇄
         </button>
         <button
-          className="mc-btn"
+          className="mc-btn mc-top"
           onClick={() => setTimeMode({ pagi: 'sore', sore: 'malam', malam: 'pagi' }[timeMode])}
           title={t.timeLabel}
         >
           {t.times[timeMode]}
         </button>
-        <button className="mc-btn" onClick={toggleMusic} aria-pressed={music}>
+        <button className="mc-btn mc-top" onClick={toggleMusic} aria-pressed={music}>
           {music ? '🎵' : '🔇'} <span className="hidden sm:inline">{t.music}: {music ? t.on : t.off}</span>
         </button>
       </div>

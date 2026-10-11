@@ -69,7 +69,7 @@ export function QuestLog({ done, t, labels, onGo, compact }) {
   const stage2 = GAME_QUESTS.filter((q) => done.has(q)).length
   const show = open && !compact
   return (
-    <aside className="fixed right-3 top-[98px] z-20 flex w-[min(300px,calc(100vw-24px))] flex-col items-end md:right-5 md:top-[68px]">
+    <aside className="fixed right-2 top-[50px] z-20 flex w-[min(300px,calc(100vw-24px))] flex-col items-end md:right-5 md:top-[68px]">
       <button className="mc-btn" onClick={() => setOpen(!open)} aria-expanded={show}>
         📜 {t.q.title} {count}/{total} {show ? '▴' : '▾'}
       </button>

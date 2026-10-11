@@ -603,9 +603,9 @@ main[data-panel='1'] .mc-talkbtn {
 @media (max-width: 767px) {
   .mc-logo {
     display: inline-block;
-    padding: 4px 6px 2px;
-    font-size: 12px;
-    line-height: 1.45;
+    padding: 3px 5px 2px;
+    font-size: 10px;
+    line-height: 1.5;
     background: rgba(0, 0, 0, 0.35);
   }
 }
@@ -677,4 +677,14 @@ main[data-panel='1'] .mc-talkbtn {
   height: 8px;
   background: #80ff20;
   box-shadow: 0 0 6px #80ff20;
+}
+
+/* tombol kanan atas di HP: lebih ramping */
+@media (max-width: 767px) {
+  .mc-top {
+    min-height: 30px;
+    padding: 2px 7px;
+    gap: 4px;
+    font-size: 14px;
+  }
 }
